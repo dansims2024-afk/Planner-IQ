@@ -27,7 +27,7 @@ const PhaseTracker = ({ currentPhase }) => {
                 <Circle size={20} className="text-slate-200" />
               )}
             </div>
-            <span className={`text-[10px] mt-2 font-bold uppercase tracking-tighter ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
+            <span className={`text-[10px] mt-2 font-bold uppercase ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
               {phase.name}
             </span>
           </div>
@@ -56,7 +56,7 @@ export default function ProjectCard({ project }) {
       <PhaseTracker currentPhase={project.currentPhase} />
       <div className="mt-6 pt-4 border-t border-slate-50 flex justify-between items-center">
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Next Step</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">Next Step</span>
           <span className="text-sm font-semibold text-slate-700">{project.nextTask}</span>
         </div>
         <div className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl
