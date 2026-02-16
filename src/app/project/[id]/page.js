@@ -6,8 +6,35 @@ import {
   CheckCircle2, Plus, ArrowLeft, ChevronRight, Send 
 } from 'lucide-react';
 
-// Crucial: This must match your actual file path
-import { INITIAL_PROJECTS } from '../../../lib/constants';
+// --- DATA DEFINED LOCALLY TO PREVENT IMPORT ERRORS ---
+const DEFAULT_PROJECTS = [
+  { 
+    id: 101, 
+    title: 'Recruit-IQ Integration', 
+    type: 'Development', 
+    status: 'On Track', 
+    deadline: '3 days',
+    phases: [
+      { id: 1, name: 'Planning', tasks: [{ id: 1, text: 'Scope API', completed: true }, { id: 2, text: 'DB Schema', completed: true }] },
+      { id: 2, name: 'Execution', tasks: [{ id: 3, text: 'Build Auth', completed: false }] },
+      { id: 3, name: 'Review', tasks: [] },
+      { id: 4, name: 'Launch', tasks: [] }
+    ]
+  },
+  { 
+    id: 102, 
+    title: 'Staff-IQ Launch', 
+    type: 'Marketing', 
+    status: 'At Risk', 
+    deadline: 'Overdue',
+    phases: [
+      { id: 1, name: 'Planning', tasks: [{ id: 1, text: 'Define Audience', completed: true }] },
+      { id: 2, name: 'Execution', tasks: [{ id: 2, text: 'Social Assets', completed: false }] },
+      { id: 3, name: 'Review', tasks: [] },
+      { id: 4, name: 'Launch', tasks: [] }
+    ]
+  }
+];
 
 export default function ProjectDetail({ params }) {
   const [project, setProject] = useState(null);
@@ -15,36 +42,48 @@ export default function ProjectDetail({ params }) {
   const [taskText, setTaskText] = useState("");
   const [isMounted, setIsMounted] = useState(false);
 
-  // 1. Prevent Hydration Error: Ensure we are in the browser
+  // 1. Mount Check (Prevents Hydration Errors)
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 2. Load Data Safely
+  // 2. Load Data (Safe Mode)
   useEffect(() => {
     if (!isMounted) return;
 
+    // Try to get data from browser storage
     const localData = localStorage.getItem('planner_iq_projects');
-    const allProjects = localData ? JSON.parse(localData) : INITIAL_PROJECTS;
     
-    const current = allProjects.find(p => p.id.toString() === params.id);
+    // If storage is empty, use the DEFAULT_PROJECTS defined above
+    const allProjects = localData ? JSON.parse(localData) : DEFAULT_PROJECTS;
+    
+    // Handle specific ID lookup safely
+    const projectId = parseInt(params.id); 
+    const current = allProjects.find(p => p.id === projectId);
+
     if (current) {
       setProject(current);
+    } else {
+      // Fallback if ID not found (prevents crash)
+      console.warn(`Project ID ${projectId} not found. Loading default.`);
+      setProject(DEFAULT_PROJECTS[0]); 
     }
   }, [params.id, isMounted]);
 
+  // 3. Save Function
   const saveProject = (updatedProject) => {
     setProject(updatedProject);
     const localData = localStorage.getItem('planner_iq_projects');
-    const allProjects = localData ? JSON.parse(localData) : [...INITIAL_PROJECTS];
+    const allProjects = localData ? JSON.parse(localData) : DEFAULT_PROJECTS;
     
     const newList = allProjects.map(p => 
-      p.id.toString() === updatedProject.id.toString() ? updatedProject : p
+      p.id === updatedProject.id ? updatedProject : p
     );
       
     localStorage.setItem('planner_iq_projects', JSON.stringify(newList));
   };
 
+  // 4. Task Handlers
   const handleAddTask = (phaseId) => {
     if (!taskText.trim() || !project) return;
 
@@ -78,15 +117,16 @@ export default function ProjectDetail({ params }) {
     saveProject({ ...project, phases: updatedPhases });
   };
 
-  // 3. Fallback UI while loading
+  // 5. Loading State
   if (!isMounted || !project) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-10 text-slate-400 font-bold animate-pulse">
-        Loading Project {params.id}...
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-slate-400 font-bold animate-pulse">Loading Workspace...</div>
       </div>
     );
   }
 
+  // 6. Main Render
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex">
