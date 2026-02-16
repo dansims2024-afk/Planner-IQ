@@ -22,10 +22,8 @@ export default function ProjectDetail({ params }) {
   }, [params.id, isMounted]);
 
   const updateProject = (updatedProject) => {
-    // Add Timestamp
     const now = new Date();
     updatedProject.lastUpdated = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
     setProject(updatedProject);
     const all = JSON.parse(localStorage.getItem('planner_iq_projects'));
     localStorage.setItem('planner_iq_projects', JSON.stringify(all.map(p => p.id === project.id ? updatedProject : p)));
@@ -54,23 +52,23 @@ export default function ProjectDetail({ params }) {
       <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center font-bold">
-            <Image src="/logo.png" alt="Logo" fill className="object-cover z-10" onLoad={()=>setLogoLoaded(true)} onError={()=>setLogoLoaded(false)} />
-            {!logoLoaded && "P"}
+            <Image src="/logo.png" alt="Logo" fill className="object-cover z-10" onLoad={()=>setLogoLoaded(true)} onError={()=>setLogoLoaded(false)} unoptimized />
+            {!logoLoaded && <span className="text-lg">P</span>}
           </div>
           <h1 className="font-bold text-white leading-none">Planner-IQ</h1>
         </div>
         <nav className="p-4 mt-6">
-          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all font-medium">
+          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all font-medium border border-transparent hover:border-white/5">
             <ArrowLeft size={20}/> Back to Satellite
           </Link>
         </nav>
       </aside>
 
-      <main className="flex-1 lg:ml-72 p-12">
+      <main className="flex-1 lg:ml-72 p-12 bg-slate-50/50">
         <div className="max-w-4xl mx-auto">
           <header className="mb-12">
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-              <Link href="/" className="hover:text-blue-600">Satellite</Link>
+              <Link href="/" className="hover:text-blue-600 transition-colors">Satellite</Link>
               <ChevronRight size={12} />
               <span className="text-slate-900">{project.title}</span>
             </div>
@@ -84,14 +82,14 @@ export default function ProjectDetail({ params }) {
           
           <div className="space-y-12">
             {project.phases.map(phase => (
-              <section key={phase.id}>
+              <section key={phase.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex justify-between items-center mb-5 px-2">
-                  <h3 className="font-bold text-slate-800 uppercase text-xs tracking-[0.2em]">{phase.name}</h3>
-                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-md">{phase.tasks.filter(t=>t.completed).length} / {phase.tasks.length}</span>
+                  <h3 className="font-bold text-slate-800 uppercase text-xs tracking-[0.2em]">{phase.name} Phase</h3>
+                  <span className="text-[10px] font-bold text-slate-400 bg-white border border-slate-100 px-3 py-1 rounded-md">{phase.tasks.filter(t=>t.completed).length} / {phase.tasks.length}</span>
                 </div>
-                <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                   {phase.tasks.map(task => (
-                    <div key={task.id} onClick={()=>toggleTask(phase.id, task.id)} className="flex items-center gap-4 p-6 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-all">
+                    <div key={task.id} onClick={()=>toggleTask(phase.id, task.id)} className="flex items-center gap-4 p-6 border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer transition-all">
                       <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-blue-600 border-blue-600' : 'border-slate-200 bg-slate-50'}`}>
                         {task.completed && <CheckCircle2 size={14} className="text-white"/>}
                       </div>
@@ -101,11 +99,11 @@ export default function ProjectDetail({ params }) {
                   <div className="p-4 bg-slate-50/50">
                     {activeInput === phase.id ? (
                       <div className="flex gap-2 p-1">
-                        <input autoFocus value={taskText} onChange={(e)=>setTaskText(e.target.value)} onKeyDown={(e)=>e.key==='Enter' && handleAddTask(phase.id)} className="flex-1 p-3 bg-white border rounded-2xl outline-none focus:ring-2 focus:ring-blue-100" placeholder="New requirement..." />
+                        <input autoFocus value={taskText} onChange={(e)=>setTaskText(e.target.value)} onKeyDown={(e)=>e.key==='Enter' && handleAddTask(phase.id)} className="flex-1 p-3 bg-white border rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 text-sm" placeholder="New requirement..." />
                         <button onClick={()=>handleAddTask(phase.id)} className="bg-blue-600 text-white p-4 rounded-2xl"><Send size={18}/></button>
                       </div>
                     ) : (
-                      <button onClick={()=>setActiveInput(phase.id)} className="text-[10px] font-bold text-slate-400 hover:text-blue-600 w-full py-2">+ Add Requirement</button>
+                      <button onClick={()=>setActiveInput(phase.id)} className="text-[10px] font-bold text-slate-400 hover:text-blue-600 w-full py-2">+ Add Step</button>
                     )}
                   </div>
                 </div>
