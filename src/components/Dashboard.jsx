@@ -1,40 +1,73 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Layout, CheckCircle2, Settings, Plus, Search, Bell, Command } from 'lucide-react';
+import { Layout, CheckCircle2, Settings, Plus, Search, Bell } from 'lucide-react';
 import ProjectCard from './ProjectCard';
 
-// --- DATA DEFINED HERE FOR SAFETY ---
-const INITIAL_PROJECTS = [
+// --- THE "DEMO" DATA SET ---
+const DEMO_PROJECTS = [
   { 
     id: 101, 
-    title: 'Recruit-IQ Integration', 
+    title: 'Recruit-IQ Platform Launch', 
     type: 'Development', 
     status: 'On Track', 
     currentPhase: 2, 
-    nextTask: 'API Mapping', 
-    deadline: '3 days',
-    phases: []
+    nextTask: 'Stripe Integration', 
+    deadline: '2 Weeks',
+    phases: [
+      { 
+        id: 1, 
+        name: 'Planning', 
+        tasks: [
+          { id: 1, text: 'Define User Personas (Recruiters vs Candidates)', completed: true },
+          { id: 2, text: 'System Architecture Diagram', completed: true },
+          { id: 3, text: 'API Swagger Documentation', completed: true },
+          { id: 4, text: 'Select Tech Stack (Next.js + Supabase)', completed: true }
+        ] 
+      },
+      { 
+        id: 2, 
+        name: 'Execution', 
+        tasks: [
+          { id: 5, text: 'Initialize Repo & CI/CD Pipeline', completed: true },
+          { id: 6, text: 'Authentication Setup (Clerk)', completed: true },
+          { id: 7, text: 'Candidate Dashboard UI', completed: true },
+          { id: 8, text: 'Stripe Payments Integration', completed: false },
+          { id: 9, text: 'Email Notification Service', completed: false }
+        ] 
+      },
+      { 
+        id: 3, 
+        name: 'Review', 
+        tasks: [
+          { id: 10, text: 'Internal QA Testing', completed: false },
+          { id: 11, text: 'UAT with Beta Users', completed: false }
+        ] 
+      },
+      { 
+        id: 4, 
+        name: 'Launch', 
+        tasks: [
+          { id: 12, text: 'Production Deployment', completed: false },
+          { id: 13, text: 'Go-Live Announcement', completed: false }
+        ] 
+      }
+    ]
   },
   { 
     id: 102, 
-    title: 'Staff-IQ Launch', 
+    title: 'Q3 Marketing Blitz', 
     type: 'Marketing', 
     status: 'At Risk', 
     currentPhase: 3, 
-    nextTask: 'Social Assets', 
+    nextTask: 'Finalize Ad Spend', 
     deadline: 'Overdue',
-    phases: []
-  },
-  { 
-    id: 103, 
-    title: 'Q4 Hiring Blitz', 
-    type: 'Recruiting', 
-    status: 'On Track', 
-    currentPhase: 1, 
-    nextTask: 'Job Descriptions', 
-    deadline: '2 weeks',
-    phases: []
+    phases: [
+      { id: 1, name: 'Planning', tasks: [{id:1, text:'Budget Approval', completed:true}] },
+      { id: 2, name: 'Execution', tasks: [{id:2, text:'Create Assets', completed:true}] },
+      { id: 3, name: 'Review', tasks: [{id:3, text:'Legal Review', completed:false}] },
+      { id: 4, name: 'Launch', tasks: [] }
+    ]
   }
 ];
 
@@ -42,14 +75,25 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    // Try to load saved data, otherwise use the constants above
+    // 1. Check if we already have data
     const saved = localStorage.getItem('planner_iq_projects');
-    if (saved) {
-      setProjects(JSON.parse(saved));
+    
+    // 2. If NO data exists, load the DEMO set immediately
+    if (!saved) {
+      setProjects(DEMO_PROJECTS);
+      localStorage.setItem('planner_iq_projects', JSON.stringify(DEMO_PROJECTS));
     } else {
-      setProjects(INITIAL_PROJECTS);
+      // 3. If data exists, use it
+      setProjects(JSON.parse(saved));
     }
   }, []);
+
+  // FORCE RESET FUNCTION (For testing)
+  const resetDemo = () => {
+    setProjects(DEMO_PROJECTS);
+    localStorage.setItem('planner_iq_projects', JSON.stringify(DEMO_PROJECTS));
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
@@ -73,9 +117,15 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium cursor-pointer hover:bg-white/5 hover:text-white transition-all text-slate-400 group">
             <Bell size={20} /> <span>Notifications</span>
-            <span className="ml-auto bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">3</span>
           </div>
         </nav>
+
+        {/* RESET DEMO BUTTON (Hidden Utility) */}
+        <div className="p-4">
+          <button onClick={resetDemo} className="w-full text-xs text-slate-600 hover:text-blue-400 text-center py-2">
+            Reset to Demo Data
+          </button>
+        </div>
 
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
@@ -91,7 +141,6 @@ export default function Dashboard() {
 
       {/* MAIN AREA */}
       <main className="flex-1 lg:ml-72 relative">
-        {/* Sticky Header */}
         <header className="sticky top-0 z-30 bg-slate-50/80 backdrop-blur-xl border-b border-slate-200/50 px-8 py-4 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">Overview</h2>
@@ -110,20 +159,11 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Content Grid */}
         <div className="p-8 pb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {projects.map(project => (
               <ProjectCard key={project.id} project={project} />
             ))}
-            
-            {/* Empty State Card */}
-            <button className="group border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-blue-400 hover:bg-blue-50/30 transition-all min-h-[200px]">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-blue-100 group-hover:text-blue-600 transition-all mb-3 group-hover:scale-110">
-                <Plus size={24} />
-              </div>
-              <span className="font-bold text-slate-600 group-hover:text-blue-700 transition-colors">Start Workflow</span>
-            </button>
           </div>
         </div>
       </main>
