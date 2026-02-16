@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Planner-IQ | Workflow Manager",
-  description: "Customizable project tracking and task management",
+  description: "Standardized, color-coded project tracking",
 };
 
 export default function RootLayout({ children }) {
