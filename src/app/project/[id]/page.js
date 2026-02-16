@@ -8,8 +8,7 @@ import { CheckCircle2, Plus, ArrowLeft, ChevronRight, Send, Calendar } from 'luc
 export default function ProjectDetail({ params }) {
   const [project, setProject] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
-  const [taskText, setTaskText] = useState("");
-  const [activeInput, setActiveInput] = useState(null);
+  const [logoLoaded, setLogoLoaded] = useState(false);
 
   useEffect(() => setIsMounted(true), []);
 
@@ -20,20 +19,29 @@ export default function ProjectDetail({ params }) {
     setProject(current);
   }, [params.id, isMounted]);
 
-  if (!isMounted || !project) return <div className="p-10 text-slate-400 font-bold">Loading Workspace...</div>;
+  if (!isMounted || !project) return <div className="p-10 text-slate-400 font-bold">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold">
-             <Image src="/logo.png" alt="Logo" fill className="object-cover" unoptimized onError={(e) => e.currentTarget.style.display = 'none'} />
-             <span className="absolute z-0">P</span>
+          
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold shrink-0">
+             <Image 
+               src="/logo.png" 
+               alt="Logo" 
+               fill 
+               className="object-cover z-10" 
+               onLoad={() => setLogoLoaded(true)}
+               onError={(e) => { e.currentTarget.style.display = 'none'; setLogoLoaded(false); }} 
+             />
+             {!logoLoaded && <span className="text-lg">P</span>}
           </div>
+
           <h1 className="font-bold text-white">Planner-IQ</h1>
         </div>
         <nav className="p-4 mt-4">
-          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all font-medium">
             <ArrowLeft size={20} /> Back to Dashboard
           </Link>
         </nav>
