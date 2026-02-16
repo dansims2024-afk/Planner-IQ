@@ -3,48 +3,50 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Layout, CheckCircle2, Plus, ArrowLeft, ChevronRight, 
-  Calendar, User, MoreHorizontal, Clock, Send 
+  CheckCircle2, Plus, ArrowLeft, ChevronRight, Send 
 } from 'lucide-react';
 
-// --- ADD THIS IMPORT ---
-// This brings in the "Standard" data so the page knows what to show if it's the first time loading.
+// Crucial: This must match your actual file path
 import { INITIAL_PROJECTS } from '../../../lib/constants';
 
 export default function ProjectDetail({ params }) {
   const [project, setProject] = useState(null);
   const [activeInput, setActiveInput] = useState(null); 
   const [taskText, setTaskText] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
+  // 1. Prevent Hydration Error: Ensure we are in the browser
   useEffect(() => {
-    // 1. Look in Browser Memory
-    const allProjects = JSON.parse(localStorage.getItem('planner_iq_projects') || '[]');
-    
-    // 2. Find the specific project by ID
-    let current = allProjects.find(p => p.id.toString() === params.id);
-    
-    // 3. If not in memory, look in the INITIAL_PROJECTS list
-    if (!current) {
-      current = INITIAL_PROJECTS.find(p => p.id.toString() === params.id);
-    }
+    setIsMounted(true);
+  }, []);
 
-    setProject(current);
-  }, [params.id]);
+  // 2. Load Data Safely
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const localData = localStorage.getItem('planner_iq_projects');
+    const allProjects = localData ? JSON.parse(localData) : INITIAL_PROJECTS;
+    
+    const current = allProjects.find(p => p.id.toString() === params.id);
+    if (current) {
+      setProject(current);
+    }
+  }, [params.id, isMounted]);
 
   const saveProject = (updatedProject) => {
     setProject(updatedProject);
-    const allProjects = JSON.parse(localStorage.getItem('planner_iq_projects') || '[]');
+    const localData = localStorage.getItem('planner_iq_projects');
+    const allProjects = localData ? JSON.parse(localData) : [...INITIAL_PROJECTS];
     
-    // Update the list and save back to browser memory
-    const newList = allProjects.length > 0 
-      ? allProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
-      : INITIAL_PROJECTS.map(p => p.id === updatedProject.id ? updatedProject : p);
+    const newList = allProjects.map(p => 
+      p.id.toString() === updatedProject.id.toString() ? updatedProject : p
+    );
       
     localStorage.setItem('planner_iq_projects', JSON.stringify(newList));
   };
 
   const handleAddTask = (phaseId) => {
-    if (!taskText.trim()) return;
+    if (!taskText.trim() || !project) return;
 
     const newTask = {
       id: Date.now(), 
@@ -54,7 +56,7 @@ export default function ProjectDetail({ params }) {
 
     const updatedPhases = project.phases.map(phase => {
       if (phase.id !== phaseId) return phase;
-      return { ...phase, tasks: [...phase.tasks, newTask] };
+      return { ...phase, tasks: [...(phase.tasks || []), newTask] };
     });
 
     saveProject({ ...project, phases: updatedPhases });
@@ -63,6 +65,7 @@ export default function ProjectDetail({ params }) {
   };
 
   const toggleTask = (phaseId, taskId) => {
+    if (!project) return;
     const updatedPhases = project.phases.map(phase => {
       if (phase.id !== phaseId) return phase;
       return {
@@ -75,17 +78,24 @@ export default function ProjectDetail({ params }) {
     saveProject({ ...project, phases: updatedPhases });
   };
 
-  if (!project) return <div className="p-10 text-slate-400 font-bold">Loading Project {params.id}...</div>;
+  // 3. Fallback UI while loading
+  if (!isMounted || !project) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-10 text-slate-400 font-bold animate-pulse">
+        Loading Project {params.id}...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">P</div>
-          <h1 className="font-bold text-white">Planner-IQ</h1>
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">P</div>
+          <h1 className="font-bold text-white tracking-tight">Planner-IQ</h1>
         </div>
         <nav className="p-4 mt-4">
-          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all">
+          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all font-medium">
             <ArrowLeft size={20} /> Back to Dashboard
           </Link>
         </nav>
@@ -95,19 +105,19 @@ export default function ProjectDetail({ params }) {
         <div className="max-w-4xl mx-auto">
           <header className="mb-10">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-              <Link href="/" className="hover:text-blue-600">Overview</Link>
+              <Link href="/" className="hover:text-blue-600 transition-colors">Overview</Link>
               <ChevronRight size={12} />
               <span className="text-slate-900">{project.title}</span>
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">{project.title}</h1>
           </header>
 
-          <div className="space-y-10">
+          <div className="space-y-10 pb-20">
             {(project.phases || []).map((phase) => (
               <section key={phase.id} className="group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${phase.tasks?.every(t => t.completed) && phase.tasks?.length > 0 ? 'bg-blue-500' : 'bg-slate-300'}`} />
+                    <div className={`w-2.5 h-2.5 rounded-full ${phase.tasks?.every(t => t.completed) && phase.tasks?.length > 0 ? 'bg-blue-500' : 'bg-slate-300'}`} />
                     <h3 className="font-bold text-slate-800 uppercase tracking-wide text-sm">{phase.name}</h3>
                   </div>
                   <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">
@@ -125,7 +135,7 @@ export default function ProjectDetail({ params }) {
                       <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
                         {task.completed && <CheckCircle2 size={12} className="text-white" />}
                       </div>
-                      <span className={`text-sm font-medium ${task.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{task.text}</span>
+                      <span className={`text-sm font-medium transition-all ${task.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{task.text}</span>
                     </div>
                   ))}
 
@@ -139,11 +149,11 @@ export default function ProjectDetail({ params }) {
                           onChange={(e) => setTaskText(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleAddTask(phase.id)}
                           placeholder="What needs to be done?"
-                          className="flex-1 bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none"
+                          className="flex-1 bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none shadow-sm"
                         />
                         <button 
                           onClick={() => handleAddTask(phase.id)}
-                          className="p-2 bg-blue-600 text-white rounded-lg"
+                          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           <Send size={16} />
                         </button>
