@@ -36,7 +36,7 @@ export default function Dashboard() {
         <header className="flex justify-between items-center mb-10">
           <div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Satellite View</h2>
-            <p className="text-slate-500 mt-1">Cross-project visibility and status tracking.</p>
+            <p className="text-slate-500 mt-1">Unified view of all projects.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -44,10 +44,10 @@ export default function Dashboard() {
               <input 
                 type="text" 
                 placeholder="Search projects..." 
-                className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm focus:ring-2 focus:ring-blue-500/20 transition-all w-64 outline-none"
+                className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm outline-none"
               />
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
               <Plus size={18} /> New Project
             </button>
           </div>
@@ -57,9 +57,9 @@ export default function Dashboard() {
           {projects.map(project => (
             <ProjectCard key={project.id} project={project} />
           ))}
-          <button className="group border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-12 text-slate-400 hover:border-blue-400 hover:bg-blue-50/50 transition-all min-h-[250px]">
-            <Plus size={24} className="mb-2 group-hover:text-blue-600 transition-colors" />
-            <span className="font-bold text-slate-500 group-hover:text-blue-600">Start New Workflow</span>
+          <button className="border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-12 text-slate-400 hover:border-blue-400 hover:bg-blue-50/50 transition-all min-h-[250px]">
+            <Plus size={24} className="mb-2" />
+            <span className="font-bold">New Workflow</span>
           </button>
         </div>
       </main>
