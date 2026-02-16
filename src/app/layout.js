@@ -1,14 +1,14 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Planner-IQ",
-  description: "The intelligent workflow manager",
+  title: "Planner-IQ | Workflow Manager",
+  description: "Customizable project tracking and task management",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
