@@ -2,58 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  CheckCircle2, Plus, ArrowLeft, ChevronRight, Send, Clock, Calendar 
-} from 'lucide-react';
+import Image from 'next/image'; // Import Image
+import { CheckCircle2, Plus, ArrowLeft, ChevronRight, Send, Calendar, Settings, Layout, Bell } from 'lucide-react';
 
-// --- MIRRORED DEMO DATA (Must match Dashboard) ---
+// --- MIRRORED DEMO DATA ---
 const DEMO_PROJECTS = [
   { 
     id: 101, 
     title: 'Recruit-IQ Platform Launch', 
     type: 'Development', 
     status: 'On Track', 
-    currentPhase: 2, 
-    nextTask: 'Stripe Integration', 
     deadline: '2 Weeks',
     phases: [
-      { 
-        id: 1, 
-        name: 'Planning', 
-        tasks: [
-          { id: 1, text: 'Define User Personas (Recruiters vs Candidates)', completed: true },
-          { id: 2, text: 'System Architecture Diagram', completed: true },
-          { id: 3, text: 'API Swagger Documentation', completed: true },
-          { id: 4, text: 'Select Tech Stack (Next.js + Supabase)', completed: true }
-        ] 
-      },
-      { 
-        id: 2, 
-        name: 'Execution', 
-        tasks: [
-          { id: 5, text: 'Initialize Repo & CI/CD Pipeline', completed: true },
-          { id: 6, text: 'Authentication Setup (Clerk)', completed: true },
-          { id: 7, text: 'Candidate Dashboard UI', completed: true },
-          { id: 8, text: 'Stripe Payments Integration', completed: false },
-          { id: 9, text: 'Email Notification Service', completed: false }
-        ] 
-      },
-      { 
-        id: 3, 
-        name: 'Review', 
-        tasks: [
-          { id: 10, text: 'Internal QA Testing', completed: false },
-          { id: 11, text: 'UAT with Beta Users', completed: false }
-        ] 
-      },
-      { 
-        id: 4, 
-        name: 'Launch', 
-        tasks: [
-          { id: 12, text: 'Production Deployment', completed: false },
-          { id: 13, text: 'Go-Live Announcement', completed: false }
-        ] 
-      }
+      { id: 1, name: 'Planning', tasks: [{id:1, text:'Define User Personas', completed:true}, {id:2, text:'API Docs', completed:true}] },
+      { id: 2, name: 'Execution', tasks: [{id:3, text:'Stripe Integration', completed:false}] }
     ]
   },
   { 
@@ -61,15 +23,8 @@ const DEMO_PROJECTS = [
     title: 'Q3 Marketing Blitz', 
     type: 'Marketing', 
     status: 'At Risk', 
-    currentPhase: 3, 
-    nextTask: 'Finalize Ad Spend', 
     deadline: 'Overdue',
-    phases: [
-      { id: 1, name: 'Planning', tasks: [{id:1, text:'Budget Approval', completed:true}] },
-      { id: 2, name: 'Execution', tasks: [{id:2, text:'Create Assets', completed:true}] },
-      { id: 3, name: 'Review', tasks: [{id:3, text:'Legal Review', completed:false}] },
-      { id: 4, name: 'Launch', tasks: [] }
-    ]
+    phases: [{ id: 1, name: 'Planning', tasks: [] }]
   }
 ];
 
@@ -79,25 +34,16 @@ export default function ProjectDetail({ params }) {
   const [taskText, setTaskText] = useState("");
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  useEffect(() => setIsMounted(true), []);
 
   useEffect(() => {
     if (!isMounted) return;
-
-    // Load data from LocalStorage OR fall back to the DEMO set
     const localData = localStorage.getItem('planner_iq_projects');
     const allProjects = localData ? JSON.parse(localData) : DEMO_PROJECTS;
     
-    // Find the specific project
     const projectId = parseInt(params.id) || 101; 
     let current = allProjects.find(p => p.id === projectId);
-
-    if (!current) {
-      current = DEMO_PROJECTS[0]; // Fallback to main demo
-    }
-    setProject(current);
+    setProject(current || DEMO_PROJECTS[0]);
   }, [params.id, isMounted]);
 
   const saveProject = (updatedProject) => {
@@ -142,23 +88,52 @@ export default function ProjectDetail({ params }) {
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       
-      {/* SIDEBAR */}
-      <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex">
+      {/* SIDEBAR WITH PERSISTENT LOGO */}
+      <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex border-r border-slate-800 shadow-2xl z-20">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">P</div>
-          <h1 className="font-bold text-white tracking-tight">Planner-IQ</h1>
+          
+          {/* THE LOGO COMPONENT */}
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-900/20 shrink-0">
+             <Image 
+               src="/logo.png" 
+               alt="Logo" 
+               fill 
+               className="object-cover"
+               onError={(e) => e.currentTarget.style.display = 'none'} 
+             />
+             <span className="absolute z-0 text-lg">P</span>
+          </div>
+
+          <div>
+            <h1 className="font-bold text-white tracking-tight leading-none">Planner-IQ</h1>
+            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Workspace</span>
+          </div>
         </div>
-        <nav className="p-4 mt-4">
-          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all font-medium">
-            <ArrowLeft size={20} /> Back to Dashboard
+        
+        <nav className="flex-1 p-4 space-y-2 mt-4">
+          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium cursor-pointer hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+            <ArrowLeft size={20} /> <span>Back to Dashboard</span>
           </Link>
+          <div className="flex items-center gap-3 bg-white/10 text-white px-4 py-3 rounded-xl font-medium cursor-pointer border border-white/5">
+            <Layout size={20} /> <span>Active Project</span>
+          </div>
         </nav>
+
+        <div className="p-4 border-t border-white/5 mt-auto">
+          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 border border-white/20" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-white">Dan Sims</div>
+              <div className="text-[10px] text-slate-500">Lead Recruiter</div>
+            </div>
+            <Settings size={16} className="text-slate-500 hover:text-white" />
+          </div>
+        </div>
       </aside>
 
+      {/* MAIN AREA */}
       <main className="flex-1 lg:ml-72 relative p-10 bg-slate-50/50">
         <div className="max-w-4xl mx-auto">
-          
-          {/* HEADER */}
           <header className="mb-10">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
               <Link href="/" className="hover:text-blue-600 transition-colors">Overview</Link>
@@ -168,9 +143,7 @@ export default function ProjectDetail({ params }) {
             <div className="flex justify-between items-start">
               <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">{project.title}</h1>
               <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-                 <div className="p-1.5 bg-blue-50 text-blue-600 rounded-md">
-                    <Calendar size={18} />
-                 </div>
+                 <div className="p-1.5 bg-blue-50 text-blue-600 rounded-md"><Calendar size={18} /></div>
                  <div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase">Deadline</div>
                     <div className="text-xs font-bold text-slate-800">{project.deadline || 'No Date'}</div>
@@ -179,7 +152,6 @@ export default function ProjectDetail({ params }) {
             </div>
           </header>
 
-          {/* PHASES LIST */}
           <div className="space-y-8 pb-20">
             {(project.phases || []).map((phase) => (
               <section key={phase.id} className="group">
@@ -192,7 +164,6 @@ export default function ProjectDetail({ params }) {
                     {phase.tasks?.filter(t => t.completed).length || 0} / {phase.tasks?.length || 0}
                   </span>
                 </div>
-
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-500">
                   {(phase.tasks || []).map((task) => (
                     <div key={task.id} onClick={() => toggleTask(phase.id, task.id)} className="flex items-center gap-4 p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer group/task transition-all">
@@ -202,8 +173,6 @@ export default function ProjectDetail({ params }) {
                       <span className={`text-sm font-medium transition-all duration-300 ${task.completed ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700'}`}>{task.text}</span>
                     </div>
                   ))}
-                  
-                  {/* ADD TASK INPUT */}
                   <div className="p-3 bg-slate-50/50">
                     {activeInput === phase.id ? (
                       <div className="flex items-center gap-2 p-1 animate-in fade-in slide-in-from-top-1 duration-200">
