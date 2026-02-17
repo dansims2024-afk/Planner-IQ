@@ -2,56 +2,53 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, Calendar, Globe, BrainCircuit, TrendingUp, Settings, 
-  Menu, Bell, Search, Zap, CheckCircle2, ListTodo, ShieldCheck, 
-  ChevronRight, Users, Briefcase, FileText, ArrowLeft, Clock
+  Menu, Bell, Zap, ListTodo, ShieldCheck, 
+  Users, ArrowLeft, Clock, CheckCircle2, AlertTriangle, X
 } from 'lucide-react';
 
-// --- EXPANDED SAMPLE DATA (8 Projects) ---
+// --- DATA STORE ---
 const DATA = {
   stats: [
-    { id: 'projects', label: "Active Projects", value: "8", icon: TrendingUp, color: "#3b82f6" },
-    { id: 'tasks', label: "Pending Tasks", value: "24", icon: ListTodo, color: "#8b5cf6" },
-    { id: 'team', label: "Team Utilization", value: "78%", icon: Users, color: "#ec4899" },
-    { id: 'health', label: "System Health", value: "98%", icon: ShieldCheck, color: "#10b981" }
+    { id: 'projects', label: "Active Projects", value: "8", icon: TrendingUp, color: "#3b82f6", linkTo: 'ProjectList' },
+    { id: 'tasks', label: "Pending Tasks", value: "24", icon: ListTodo, color: "#8b5cf6", linkTo: 'AutomationView' },
+    { id: 'team', label: "Team Utilization", value: "78%", icon: Users, color: "#ec4899", linkTo: 'ResourceList' },
+    { id: 'health', label: "System Health", value: "98%", icon: ShieldCheck, color: "#10b981", linkTo: 'SystemHealth' }
   ],
   projects: [
-    { id: 1, name: "Skilled Trades: NJ Rollout", status: "Active", progress: 85, region: "North NJ", lead: "Dan Sims" },
-    { id: 2, name: "East Windsor Logistics Hub", status: "Planning", progress: 30, region: "Central", lead: "Ops Team" },
-    { id: 3, name: "Recruit-IQ Integration", status: "Delayed", progress: 45, region: "Corporate", lead: "Tech Div" },
-    { id: 4, name: "Q1 Executive Hiring", status: "Complete", progress: 100, region: "Metro", lead: "Dan Sims" },
-    { id: 5, name: "Mid-Atlantic Vendor Sync", status: "Active", progress: 60, region: "Mid-Atlantic", lead: "Sarah J." },
-    { id: 6, name: "Compliance Audit 2026", status: "Active", progress: 15, region: "Corporate", lead: "Legal" },
-    { id: 7, name: "Field Office Expansion", status: "Planning", progress: 5, region: "South NJ", lead: "Mike R." },
-    { id: 8, name: "Planner-IQ V2 Launch", status: "Active", progress: 92, region: "Remote", lead: "Dev Team" }
+    { id: 1, name: "Skilled Trades: NJ Rollout", status: "Active", progress: 85, region: "North NJ", lead: "Dan Sims", budget: "$1.2M", nextStep: "Finalize Newark Hub Lease" },
+    { id: 2, name: "East Windsor Logistics Hub", status: "Planning", progress: 30, region: "Central", lead: "Ops Team", budget: "$450k", nextStep: "Vendor Selection" },
+    { id: 3, name: "Recruit-IQ Integration", status: "Delayed", progress: 45, region: "Corporate", lead: "Tech Div", budget: "$200k", nextStep: "API Debugging" },
+    { id: 4, name: "Q1 Executive Hiring", status: "Complete", progress: 100, region: "Metro", lead: "Dan Sims", budget: "N/A", nextStep: "Onboarding" },
+    { id: 5, name: "Mid-Atlantic Vendor Sync", status: "Active", progress: 60, region: "Mid-Atlantic", lead: "Sarah J.", budget: "$75k", nextStep: "Contract Review" },
+    { id: 6, name: "Compliance Audit 2026", status: "Active", progress: 15, region: "Corporate", lead: "Legal", budget: "$50k", nextStep: "Data Collection" },
+    { id: 7, name: "Field Office Expansion", status: "Planning", progress: 5, region: "South NJ", lead: "Mike R.", budget: "$300k", nextStep: "Site Visits" },
+    { id: 8, name: "Planner-IQ V2 Launch", status: "Active", progress: 92, region: "Remote", lead: "Dev Team", budget: "$150k", nextStep: "UAT Testing" }
   ],
-  brief: {
-    title: "Morning Executive Briefing",
-    date: "February 18, 2026",
-    content: [
-      "• Skilled Trades Expansion in North NJ is currently tracking 15% ahead of schedule due to rapid candidate uptake.",
-      "• Resource allocation for the East Windsor Logistics Hub requires immediate review; utilizing 'Kareen S.' is recommended.",
-      "• Vercel production deployments for Planner-IQ have stabilized.",
-      "• Action Required: Approve Q1 Budget for 'Field Office Expansion' by 2:00 PM today."
-    ]
-  },
   resources: [
-    { name: "Kareen S.", role: "Senior Analyst", utilization: 92, status: "Overloaded" },
-    { name: "Mike R.", role: "Field Recruiter", utilization: 65, status: "Available" },
-    { name: "Sarah J.", role: "Compliance Officer", utilization: 40, status: "Available" }
+    { id: 101, name: "Kareen S.", role: "Senior Analyst", utilization: 92, status: "Overloaded", currentTask: "Financial Modeling", location: "East Windsor" },
+    { id: 102, name: "Mike R.", role: "Field Recruiter", utilization: 65, status: "Available", currentTask: "Candidate Screening", location: "Remote" },
+    { id: 103, name: "Sarah J.", role: "Compliance Officer", utilization: 40, status: "Available", currentTask: "Audit Prep", location: "Corporate" },
+    { id: 104, name: "Dev Team A", role: "Engineering", utilization: 88, status: "Active", currentTask: "Vercel Deployment", location: "Remote" }
+  ],
+  tasks: [
+    { id: 't1', time: "09:00 AM", task: "Review Mid-Atlantic KPI Report", type: "Urgent", status: "Pending" },
+    { id: 't2', time: "11:30 AM", task: "Skilled Trades Budget Approval", type: "Standard", status: "Pending" },
+    { id: 't3', time: "02:15 PM", task: "Vercel Deployment Sync", type: "Tech", status: "In Progress" },
+    { id: 't4', time: "04:00 PM", task: "Executive Summary Write-up", type: "Standard", status: "Pending" }
   ]
 };
 
-export default function PlannerIQFullDemo() {
-  // 'view' controls exactly what is on screen: 'Dashboard', 'ProjectList', 'BriefDetail', etc.
-  const [view, setView] = useState('Dashboard');
+export default function PlannerIQComplete() {
+  const [view, setView] = useState('Dashboard'); // Controls the main screen
+  const [selectedItem, setSelectedItem] = useState(null); // Tracks which Project/Resource is clicked
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [notifications, setNotifications] = useState(3);
   const [isSimulating, setIsSimulating] = useState(false);
 
-  // --- NAVIGATION HELPER ---
-  // This allows buttons inside the dashboard to switch views
-  const navigateTo = (newView) => {
-    setView(newView);
+  // --- NAVIGATION HANDLER ---
+  const navigate = (targetView, itemData = null) => {
+    setSelectedItem(itemData);
+    setView(targetView);
   };
 
   // --- SUB-VIEWS ---
@@ -63,18 +60,19 @@ export default function PlannerIQFullDemo() {
         {DATA.stats.map((stat, i) => (
           <div 
             key={i} 
-            onClick={() => stat.id === 'projects' ? navigateTo('ProjectList') : null}
+            onClick={() => navigate(stat.linkTo)}
             style={{ 
               backgroundColor: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', 
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              cursor: stat.id === 'projects' ? 'pointer' : 'default',
-              border: stat.id === 'projects' ? '1px solid #3b82f6' : '1px solid transparent'
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+              border: '1px solid transparent', transition: '0.2s'
             }}
+            onMouseOver={(e) => e.currentTarget.style.borderColor = stat.color}
+            onMouseOut={(e) => e.currentTarget.style.borderColor = 'transparent'}
           >
             <div>
               <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '4px' }}>{stat.label}</p>
               <h3 style={{ fontSize: '2rem', margin: 0, color: '#0f172a' }}>{stat.value}</h3>
-              {stat.id === 'projects' && <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Click to view details →</span>}
+              <span style={{ fontSize: '0.75rem', color: stat.color, fontWeight: '500' }}>Click to view →</span>
             </div>
             <div style={{ color: stat.color, backgroundColor: `${stat.color}15`, padding: '12px', borderRadius: '12px' }}>
               <stat.icon size={24} />
@@ -83,78 +81,53 @@ export default function PlannerIQFullDemo() {
         ))}
       </div>
       
+      {/* DASHBOARD WIDGETS */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        {/* PRIORITY PROJECTS PREVIEW */}
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-             <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Priority Roadmap</h3>
-             <button onClick={() => navigateTo('ProjectList')} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontWeight: '600' }}>View All</button>
+             <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Priority Watchlist</h3>
+             <button onClick={() => navigate('ProjectList')} style={{ color: '#3b82f6', background: 'none', border: 'none', fontWeight: '600', cursor: 'pointer' }}>View All Projects</button>
           </div>
           {DATA.projects.slice(0, 3).map((p) => (
-            <div key={p.id} style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontWeight: '600' }}>{p.name}</span>
-                <span style={{ fontSize: '0.8rem', color: p.status === 'Active' ? '#10b981' : '#f59e0b', backgroundColor: p.status === 'Active' ? '#d1fae5' : '#fef3c7', padding: '2px 8px', borderRadius: '12px' }}>{p.status}</span>
+            <div 
+              key={p.id} 
+              onClick={() => navigate('ProjectDetail', p)}
+              style={{ marginBottom: '12px', padding: '12px', border: '1px solid #f1f5f9', borderRadius: '12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <div>
+                <span style={{ fontWeight: '600', display: 'block' }}>{p.name}</span>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{p.region} • {p.lead}</span>
               </div>
-              <div style={{ width: '100%', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>
-                <div style={{ width: `${p.progress}%`, height: '100%', backgroundColor: '#3b82f6', borderRadius: '4px' }}></div>
-              </div>
+              <ArrowLeft size={16} style={{ transform: 'rotate(180deg)', color: '#cbd5e1' }} />
             </div>
           ))}
         </div>
         
-        {/* EA INSIGHT CARD */}
         <div style={{ backgroundColor: '#1e293b', padding: '24px', borderRadius: '20px', color: 'white' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
             <BrainCircuit size={20} color="#3b82f6" />
-            <h3 style={{ margin: 0 }}>EA Insight</h3>
+            <h3 style={{ margin: 0 }}>System Status</h3>
           </div>
-          <p style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: '1.6' }}>
-            <strong>Morning Brief:</strong> Skilled Trades expansion in North NJ is ahead of schedule. Resource allocation for East Windsor needs review.
-          </p>
-          {/* FUNCTIONAL BLUE BUTTON */}
-          <button 
-            onClick={() => navigateTo('BriefDetail')}
-            style={{ marginTop: '20px', width: '100%', padding: '12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', transition: '0.2s' }}
-          >
-            View Full Brief
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const BriefDetailView = () => (
-    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <button onClick={() => navigateTo('Dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', marginBottom: '24px' }}>
-        <ArrowLeft size={18} /> Back to Dashboard
-      </button>
-      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-        <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '24px', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '2rem', margin: '0 0 8px 0', color: '#0f172a' }}>{DATA.brief.title}</h2>
-          <div style={{ display: 'flex', gap: '16px', color: '#64748b' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={16} /> {DATA.brief.date}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={16} /> 08:00 AM EST</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+             <CheckCircle2 color="#10b981" /> <span>Planner-IQ Engine: <strong>Online</strong></span>
           </div>
-        </div>
-        <div style={{ lineHeight: '1.8', fontSize: '1.1rem', color: '#334155' }}>
-          {DATA.brief.content.map((paragraph, idx) => (
-             <p key={idx} style={{ marginBottom: '16px' }}>{paragraph}</p>
-          ))}
-        </div>
-        <div style={{ marginTop: '40px', padding: '20px', backgroundColor: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd' }}>
-           <h4 style={{ margin: '0 0 8px 0', color: '#0369a1' }}>AI Recommendation:</h4>
-           <p style={{ margin: 0, color: '#0c4a6e' }}>Schedule a 15-minute sync with Mike R. regarding South NJ expansion progress.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+             <CheckCircle2 color="#10b981" /> <span>Database (East Windsor): <strong>Connected</strong></span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+             <AlertTriangle color="#f59e0b" /> <span>Vercel Deployments: <strong>Stabilizing</strong></span>
+          </div>
+          <button onClick={() => navigate('SystemHealth')} style={{ marginTop: '10px', width: '100%', padding: '10px', backgroundColor: '#334155', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Run Diagnostics</button>
         </div>
       </div>
     </div>
   );
 
   const ProjectListView = () => (
-    <div className="animate-fade-in" style={{ backgroundColor: 'white', padding: '32px', borderRadius: '20px', minHeight: '60vh' }}>
+    <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '20px', minHeight: '60vh' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '1.5rem', margin: 0 }}>All Active Projects ({DATA.projects.length})</h2>
-        <button style={{ padding: '10px 20px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>+ New Initiative</button>
+        <button onClick={() => navigate('Dashboard')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>Back to Home</button>
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
@@ -163,12 +136,12 @@ export default function PlannerIQFullDemo() {
             <th style={{ padding: '16px' }}>Region</th>
             <th style={{ padding: '16px' }}>Lead</th>
             <th style={{ padding: '16px' }}>Progress</th>
-            <th style={{ padding: '16px' }}>Status</th>
+            <th style={{ padding: '16px' }}>Action</th>
           </tr>
         </thead>
         <tbody>
           {DATA.projects.map((p) => (
-            <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+            <tr key={p.id} onClick={() => navigate('ProjectDetail', p)} style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition: '0.1s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}>
               <td style={{ padding: '16px', fontWeight: '500' }}>{p.name}</td>
               <td style={{ padding: '16px', color: '#64748b' }}>{p.region}</td>
               <td style={{ padding: '16px' }}>{p.lead}</td>
@@ -180,11 +153,7 @@ export default function PlannerIQFullDemo() {
                    <span style={{ fontSize: '0.8rem' }}>{p.progress}%</span>
                  </div>
               </td>
-              <td style={{ padding: '16px' }}>
-                <span style={{ fontSize: '0.85rem', padding: '4px 12px', borderRadius: '20px', backgroundColor: p.status === 'Active' ? '#dcfce7' : '#fee2e2', color: p.status === 'Active' ? '#166534' : '#991b1b' }}>
-                  {p.status}
-                </span>
-              </td>
+              <td style={{ padding: '16px', color: '#3b82f6' }}>View Details</td>
             </tr>
           ))}
         </tbody>
@@ -192,16 +161,63 @@ export default function PlannerIQFullDemo() {
     </div>
   );
 
-  const ResourceView = () => (
-    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
-      {DATA.resources.map((r, i) => (
-        <div key={i} style={{ backgroundColor: 'white', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+  const ProjectDetailView = ({ project }) => (
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <button onClick={() => navigate('ProjectList')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', marginBottom: '24px' }}>
+        <ArrowLeft size={18} /> Back to Projects
+      </button>
+      
+      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '32px' }}>
+          <div>
+            <span style={{ color: '#3b82f6', fontWeight: '600', fontSize: '0.9rem' }}>PROJECT ID: #PIQ-{project.id}00</span>
+            <h1 style={{ fontSize: '2.5rem', margin: '8px 0', color: '#0f172a' }}>{project.name}</h1>
+            <p style={{ color: '#64748b', fontSize: '1.1rem' }}>Lead: {project.lead} | Region: {project.region}</p>
+          </div>
+          <span style={{ padding: '8px 16px', borderRadius: '20px', backgroundColor: project.status === 'Active' ? '#dcfce7' : '#fee2e2', color: project.status === 'Active' ? '#166534' : '#991b1b', fontWeight: '600' }}>
+            {project.status}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '40px' }}>
+          <div style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '16px' }}>
+            <h3 style={{ marginTop: 0, color: '#475569' }}>Financials</h3>
+            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{project.budget}</p>
+            <p style={{ fontSize: '0.9rem', color: '#64748b' }}>Allocated Budget</p>
+          </div>
+          <div style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '16px' }}>
+            <h3 style={{ marginTop: 0, color: '#475569' }}>Next Milestone</h3>
+            <p style={{ fontSize: '1.2rem', fontWeight: 'bold', margin: 0 }}>{project.nextStep}</p>
+            <p style={{ fontSize: '0.9rem', color: '#64748b' }}>Action Required</p>
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: '16px' }}>Completion Status ({project.progress}%)</h3>
+          <div style={{ width: '100%', height: '24px', backgroundColor: '#f1f5f9', borderRadius: '12px', overflow: 'hidden' }}>
+             <div style={{ width: `${project.progress}%`, height: '100%', backgroundColor: '#3b82f6', transition: 'width 1s ease' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ResourceListView = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+      {DATA.resources.map((r) => (
+        <div 
+          key={r.id} 
+          onClick={() => navigate('ResourceDetail', r)}
+          style={{ backgroundColor: 'white', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: '0.2s' }}
+          onMouseOver={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+          onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#64748b' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#64748b', fontSize: '1.2rem' }}>
               {r.name.charAt(0)}
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{r.name}</h3>
+              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{r.name}</h3>
               <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.9rem' }}>{r.role}</p>
             </div>
           </div>
@@ -214,53 +230,88 @@ export default function PlannerIQFullDemo() {
                <div style={{ width: `${r.utilization}%`, height: '100%', backgroundColor: r.utilization > 90 ? '#ef4444' : '#10b981', borderRadius: '4px' }}></div>
             </div>
           </div>
-          <button style={{ width: '100%', padding: '10px', border: '1px solid #e2e8f0', backgroundColor: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}>
-            View Assignments
-          </button>
+          <span style={{ display: 'block', textAlign: 'center', color: '#3b82f6', fontSize: '0.9rem', fontWeight: '500' }}>Click for Profile</span>
         </div>
       ))}
     </div>
   );
 
+  const ResourceDetailView = ({ resource }) => (
+    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+      <button onClick={() => navigate('ResourceList')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', marginBottom: '24px' }}>
+        <ArrowLeft size={18} /> Back to Team
+      </button>
+      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
+        <div style={{ width: '100px', height: '100px', margin: '0 auto 24px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', color: '#64748b' }}>
+          {resource.name.charAt(0)}
+        </div>
+        <h1 style={{ margin: '0 0 8px 0' }}>{resource.name}</h1>
+        <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '24px' }}>{resource.role} • {resource.location}</p>
+        
+        <div style={{ textAlign: 'left', backgroundColor: '#f8fafc', padding: '24px', borderRadius: '16px', marginBottom: '24px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#475569' }}>Current Assignment</h4>
+          <p style={{ margin: 0, fontWeight: '500', fontSize: '1.1rem' }}>{resource.currentTask}</p>
+        </div>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid #f1f5f9' }}>
+          <span>Utilization</span>
+          <span style={{ fontWeight: 'bold', color: resource.utilization > 90 ? '#ef4444' : '#10b981' }}>{resource.utilization}%</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid #f1f5f9' }}>
+          <span>Status</span>
+          <span>{resource.status}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   const AutomationView = () => (
-    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <button onClick={() => navigate('Dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', marginBottom: '24px' }}>
+        <ArrowLeft size={18} /> Back to Dashboard
+      </button>
       <div style={{ backgroundColor: '#0f172a', color: 'white', borderRadius: '20px', padding: '32px', marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
           <div style={{ padding: '12px', backgroundColor: '#3b82f6', borderRadius: '12px' }}>
             <Zap size={24} color="white" />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Planner-IQ Assistant</h2>
-            <p style={{ color: '#94a3b8', margin: '4px 0 0' }}>Automated Executive Operations</p>
+            <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Automated Operations</h2>
+            <p style={{ color: '#94a3b8', margin: '4px 0 0' }}>Task Optimization Engine</p>
           </div>
         </div>
-        
         <button 
              onClick={() => { setIsSimulating(true); setTimeout(() => setIsSimulating(false), 2000); }}
              style={{ width: '100%', padding: '16px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
            >
              {isSimulating ? <BrainCircuit className="animate-spin" /> : <BrainCircuit />}
-             {isSimulating ? "Running Optimization..." : "Run Daily Optimization"}
+             {isSimulating ? "Optimizing Workflows..." : "Run Daily Optimization"}
         </button>
       </div>
-      
-      {/* Simulation Result */}
-      {isSimulating === false && (
-        <div>
-           <h3 style={{ marginLeft: '8px', marginBottom: '16px', color: '#64748b' }}>Today's Schedule</h3>
-           <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
-              <div style={{ minWidth: '80px', paddingTop: '4px', textAlign: 'right', fontWeight: 'bold', color: '#64748b' }}>09:00 AM</div>
-              <div style={{ flex: 1, backgroundColor: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #ef4444' }}>
-                 <h4 style={{ margin: '0 0 4px 0' }}>Review Mid-Atlantic KPI Report</h4>
-                 <span style={{ fontSize: '0.8rem', backgroundColor: '#f1f5f9', padding: '4px 10px', borderRadius: '12px' }}>Urgent</span>
-              </div>
-           </div>
+
+      <h3 style={{ marginLeft: '8px', marginBottom: '16px', color: '#64748b' }}>Pending Tasks ({DATA.tasks.length})</h3>
+      {DATA.tasks.map((t) => (
+        <div key={t.id} style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
+          <div style={{ minWidth: '80px', paddingTop: '4px', textAlign: 'right', fontWeight: 'bold', color: '#64748b' }}>{t.time}</div>
+          <div style={{ flex: 1, backgroundColor: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: `4px solid ${t.type === 'Urgent' ? '#ef4444' : '#3b82f6'}` }}>
+             <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{t.task}</h4>
+             <span style={{ fontSize: '0.8rem', backgroundColor: '#f1f5f9', padding: '4px 10px', borderRadius: '12px', color: '#64748b' }}>{t.type}</span>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 
-  // --- MAIN SCAFFOLD ---
+  const SystemHealthView = () => (
+    <div style={{ textAlign: 'center', marginTop: '40px' }}>
+       <ShieldCheck size={64} color="#10b981" style={{ marginBottom: '24px' }} />
+       <h2>System Healthy</h2>
+       <p style={{ color: '#64748b' }}>All Planner-IQ systems are operational.</p>
+       <button onClick={() => navigate('Dashboard')} style={{ marginTop: '20px', padding: '10px 20px', border: '1px solid #cbd5e1', borderRadius: '8px', background: 'white', cursor: 'pointer' }}>Return Home</button>
+    </div>
+  );
+
+  // --- MAIN RENDER ---
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f4f7fb', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
       
@@ -269,24 +320,30 @@ export default function PlannerIQFullDemo() {
         width: sidebarOpen ? '280px' : '80px', backgroundColor: '#0f172a', color: 'white', 
         padding: '24px 16px', transition: 'width 0.3s ease', display: 'flex', flexDirection: 'column', flexShrink: 0 
       }}>
+        {/* LOGO: CSS STYLED (NO IMAGE FILE NEEDED) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-          <div style={{ backgroundColor: '#0070f3', padding: '10px', borderRadius: '10px', minWidth: '44px' }}>
-            <Zap size={24} color="white" />
+          <div style={{ backgroundColor: '#0070f3', padding: '10px', borderRadius: '12px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={24} color="white" fill="white" />
           </div>
-          {sidebarOpen && <span style={{ fontSize: '1.4rem', fontWeight: '800' }}>Planner-IQ</span>}
+          {sidebarOpen && (
+            <div style={{ lineHeight: '1.1' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: '800', display: 'block' }}>Planner-IQ</span>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', letterSpacing: '1px' }}>ELITE EDITION</span>
+            </div>
+          )}
         </div>
 
         <nav style={{ flex: 1 }}>
           {[
             { id: 'Dashboard', icon: LayoutDashboard },
             { id: 'ProjectList', label: 'Projects', icon: Calendar },
-            { id: 'ResourceView', label: 'Resources', icon: Globe },
+            { id: 'ResourceList', label: 'Resources', icon: Globe },
             { id: 'AutomationView', label: 'Automations', icon: BrainCircuit },
-            { id: 'Settings', label: 'Settings', icon: Settings }
+            { id: 'SystemHealth', label: 'System Status', icon: Settings }
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => navigateTo(item.id)}
+              onClick={() => navigate(item.id)}
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', marginBottom: '8px',
                 borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '0.95rem',
@@ -307,17 +364,17 @@ export default function PlannerIQFullDemo() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><Menu size={24} /></button>
             <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: '700', color: '#0f172a' }}>
-              {view === 'ProjectList' ? 'All Projects' : view === 'BriefDetail' ? 'Executive Brief' : view}
+              {view === 'ProjectList' ? 'Projects' : view === 'ProjectDetail' ? 'Project Details' : view}
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#eff6ff', padding: '8px 16px', borderRadius: '20px', color: '#2563eb', fontSize: '0.85rem', fontWeight: '600' }}>
                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563eb' }}></div>
-               Demo Mode
+               Live Demo
              </div>
-             <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setNotificationCount(0)}>
+             <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setNotifications(0)}>
                <Bell size={22} color="#64748b" />
-               {notificationCount > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#ef4444', color: 'white', fontSize: '10px', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{notificationCount}</span>}
+               {notifications > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#ef4444', color: 'white', fontSize: '10px', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{notifications}</span>}
              </div>
           </div>
         </header>
@@ -325,10 +382,11 @@ export default function PlannerIQFullDemo() {
         <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
           {view === 'Dashboard' && <DashboardView />}
           {view === 'ProjectList' && <ProjectListView />}
-          {view === 'BriefDetail' && <BriefDetailView />}
-          {view === 'ResourceView' && <ResourceView />}
+          {view === 'ProjectDetail' && <ProjectDetailView project={selectedItem} />}
+          {view === 'ResourceList' && <ResourceListView />}
+          {view === 'ResourceDetail' && <ResourceDetailView resource={selectedItem} />}
           {view === 'AutomationView' && <AutomationView />}
-          {view === 'Settings' && <div style={{ textAlign: 'center', color: '#94a3b8', marginTop: '40px' }}>Settings are restricted in this demo.</div>}
+          {view === 'SystemHealth' && <SystemHealthView />}
         </main>
       </div>
     </div>
