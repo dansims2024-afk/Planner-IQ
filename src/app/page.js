@@ -70,7 +70,6 @@ export default function PlannerIQEliteFinal() {
 
   const DashboardView = () => (
     <div className="animate-fade-in">
-      {/* STAT CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         {DATA.stats.map((stat, i) => (
           <div key={i} onClick={() => navigate(stat.linkTo)} style={{ backgroundColor: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: '1px solid transparent', transition: '0.2s' }} onMouseOver={(e) => e.currentTarget.style.borderColor = stat.color} onMouseOut={(e) => e.currentTarget.style.borderColor = 'transparent'}>
@@ -87,7 +86,6 @@ export default function PlannerIQEliteFinal() {
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1fr', gap: '24px' }}>
-        {/* ROADMAP PREVIEW */}
         <div style={{ backgroundColor: 'white', padding: '28px', borderRadius: '24px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Active Roadmap (Mid-Atlantic)</h3>
@@ -112,7 +110,6 @@ export default function PlannerIQEliteFinal() {
           ))}
         </div>
         
-        {/* EXECUTIVE PULSE: EA OVERVIEW */}
         <div style={{ backgroundColor: '#0f172a', padding: '28px', borderRadius: '24px', color: 'white', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <Calendar size={20} color="#3b82f6" />
@@ -216,7 +213,7 @@ export default function PlannerIQEliteFinal() {
         
         {project.tasks && project.tasks.length > 0 ? (
           project.tasks.map((task) => (
-            <div key={task.id} style={{ display: 'flex', alignItems: 'center', padding: '24px', borderBottom: '1px solid #f1f5f9', gap: '20px', transition: '0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fcfdfe'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+            <div key={task.id} style={{ display: 'flex', alignItems: 'center', padding: '24px', borderBottom: '1px solid #f1f5f9', gap: '20px', transition: '0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                <div style={{ cursor: 'pointer', color: task.status === 'Done' ? '#10b981' : '#cbd5e1' }}>
                  {task.status === 'Done' ? <CheckSquare size={26} /> : <Square size={26} />}
                </div>
