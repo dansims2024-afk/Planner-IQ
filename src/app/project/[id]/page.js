@@ -1,12 +1,6 @@
+// src/app/project/[id]/page.js
 export default function ProjectDetailsPage({ params }) {
   const { id } = params;
-
-  // Elite Sample Data for the Detail View
-  const SAMPLE_JD = {
-    title: "Senior Principal FinTech Architect",
-    salary: "$240k–$285k",
-    status: "Priority"
-  };
 
   return (
     <div style={{ padding: '40px', fontFamily: 'system-ui, sans-serif' }}>
@@ -14,27 +8,26 @@ export default function ProjectDetailsPage({ params }) {
         <a href="/" style={{ color: '#0070f3', textDecoration: 'none' }}>← Back to Dashboard</a>
       </nav>
 
-      <div style={{ borderLeft: '5px solid #0070f3', paddingLeft: '20px' }}>
-        <h1 style={{ margin: '0' }}>Project Analysis: {id}</h1>
-        <p style={{ color: '#666' }}>Lead Recruiter: Dan Sims</p>
+      <div style={{ borderLeft: '5px solid #0070f3', paddingLeft: '20px', marginBottom: '30px' }}>
+        <h1 style={{ margin: '0' }}>Project: {id}</h1>
+        <p style={{ color: '#666' }}>Mid-Atlantic Skilled Trades Division</p>
       </div>
 
-      <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
-        {/* Left Col: Job Info */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
         <div style={{ padding: '24px', border: '1px solid #eaeaea', borderRadius: '12px' }}>
-          <h3>Position Details</h3>
-          <p><strong>Role:</strong> {SAMPLE_JD.title}</p>
-          <p><strong>Budget:</strong> {SAMPLE_JD.salary}</p>
-          <p><strong>Division:</strong> Mid-Atlantic Skilled Trades</p>
+          <h3>Target Role: Senior FinTech Architect</h3>
+          <p><strong>Status:</strong> Recruiting</p>
+          <p><strong>Salary Range:</strong> $240k - $285k</p>
+          <hr style={{ margin: '20px 0', border: '0', borderTop: '1px solid #eaeaea' }} />
+          <p>AI matches found in East Windsor, NJ area.</p>
         </div>
 
-        {/* Right Col: AI Insights */}
         <div style={{ padding: '24px', backgroundColor: '#000', color: '#fff', borderRadius: '12px' }}>
-          <h3 style={{ color: '#0070f3' }}>AI Match Insights</h3>
-          <ul style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-            <li>Core Creativity Index: 94%</li>
-            <li>Staff-IQ Alignment: High</li>
-            <li>Retention Prediction: 2.4 Years</li>
+          <h3 style={{ color: '#0070f3' }}>Elite Insights</h3>
+          <ul style={{ paddingLeft: '20px', lineHeight: '2' }}>
+            <li>Clerk Auth: <span style={{ color: '#ff4d4f' }}>Pending Setup</span></li>
+            <li>Stripe Billing: <span style={{ color: '#ff4d4f' }}>Offline</span></li>
+            <li>AI Processing: 🟢 Ready</li>
           </ul>
         </div>
       </div>
