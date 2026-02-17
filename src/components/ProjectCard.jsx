@@ -26,8 +26,9 @@ const PhaseTracker = ({ phases }) => {
 export default function ProjectCard({ project, isEditMode, onDelete, onArchive }) {
   return (
     <div className="relative h-full">
+      {/* EDIT OVERLAYS */}
       {isEditMode && (
-        <div className="absolute -top-3 -right-3 z-[40] flex gap-2">
+        <div className="absolute -top-3 -right-3 z-[40] flex gap-2 animate-in zoom-in">
           <button onClick={(e) => { e.preventDefault(); onArchive(project.id); }} className="bg-amber-500 text-white p-3 rounded-2xl shadow-xl hover:bg-amber-600 transition-all">
             <Archive size={18} />
           </button>
@@ -42,7 +43,7 @@ export default function ProjectCard({ project, isEditMode, onDelete, onArchive }
           <div className="flex justify-between items-start mb-4">
             <div className="flex flex-col gap-2">
               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100/50 w-fit">
-                {project.division || "Executive"}
+                {project.division || "General"}
               </span>
               <h3 className="text-xl font-bold text-slate-800 mt-2 leading-tight">{project.title}</h3>
             </div>
