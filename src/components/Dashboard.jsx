@@ -3,13 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Layout, CheckCircle2, Plus, X, Search, Bell, Edit3, 
-  Settings, Archive, Trash2, Filter, Activity, Eraser, Zap
+  Settings, Archive, Trash2, Filter, Activity, Eraser
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProjectCard from './ProjectCard';
 
-// --- CONFIGURATION & SAMPLES ---
 const DIVISIONS = ["All", "Executive", "Facilities", "Internal", "Special Projects", "Archived"];
 
 const ELITE_SAMPLES = [
@@ -46,8 +45,7 @@ const ELITE_SAMPLES = [
     phases: [
       { id: 1, name: "Strategic Planning", tasks: [
         { id: 3021, text: "Venue Site Selection & RFP", completed: true, resources: [{id: 4, type: 'link', value: 'https://kyoto.conventions.jp/rfp'}] },
-        { id: 3022, text: "Define Key Learning Objectives", completed: true, resources: [] },
-        { id: 3023, text: "Secure Keynote Speaker", completed: false, resources: [] }
+        { id: 3022, text: "Define Key Learning Objectives", completed: true, resources: [] }
       ]}
     ]
   },
@@ -74,7 +72,6 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [activeDivision, setActiveDivision] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -84,34 +81,14 @@ export default function Dashboard() {
   // --- DATA HYDRATION ENGINE ---
   useEffect(() => {
     const saved = localStorage.getItem('planner_iq_projects');
-    // If storage is empty or missing current Elite structure, force-load samples
+    // Force inject if empty or using old schema
     if (!saved || saved === "[]" || !saved.includes('resources')) {
       localStorage.setItem('planner_iq_projects', JSON.stringify(ELITE_SAMPLES));
       setProjects(ELITE_SAMPLES);
     } else {
-      const parsed = JSON.parse(saved);
-      setProjects(parsed.sort((a, b) => (a.order || 0) - (b.order || 0)));
+      setProjects(JSON.parse(saved).sort((a, b) => (a.order || 0) - (b.order || 0)));
     }
   }, []);
-
-  // --- DEEP-SEARCH LOGIC ---
-  useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    const results = [];
-    projects.forEach(project => {
-      project.phases.forEach(phase => {
-        phase.tasks.forEach(task => {
-          if (task.text.toLowerCase().includes(searchQuery.toLowerCase())) {
-            results.push({ projectId: project.id, projectTitle: project.title, taskText: task.text });
-          }
-        });
-      });
-    });
-    setSearchResults(results.slice(0, 5));
-  }, [searchQuery, projects]);
 
   const saveAll = (list) => {
     setProjects(list);
@@ -143,39 +120,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
-      {/* QUICK ADD MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-bold text-2xl mb-6">New Workflow</h3>
-            <div className="space-y-6">
-              <input autoFocus value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="Project Name..." className="w-full p-4 bg-slate-50 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-500 font-medium" />
-              <select value={newDivision} onChange={(e)=>setNewDivision(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl border outline-none font-medium">
-                {DIVISIONS.filter(d => d !== "All" && d !== "Archived").map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <button onClick={() => {
-                const newP = { id: Date.now(), title: newTitle, division: newDivision, status: "On Track", archived: false, order: projects.length+1, phases: [{id:1, name: "Planning", tasks: []}] };
-                saveAll([...projects, newP]);
-                setIsModalOpen(false);
-                setNewTitle("");
-              }} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg">Initialize</button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      
       {/* SIDEBAR */}
       <aside className="w-80 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex border-r border-slate-800 shadow-2xl z-20">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center font-bold">
             <Image src="/logo.png" alt="Logo" fill className="object-cover z-10" onLoad={()=>setLogoLoaded(true)} onError={()=>setLogoLoaded(false)} unoptimized />
-            {!logoLoaded && "P"}
+            {!logoLoaded && <span className="text-lg">P</span>}
           </div>
           <h1 className="font-bold text-white tracking-tighter">Planner-IQ</h1>
         </div>
 
-        <div className="p-6">
-          <div className="bg-white/5 rounded-3xl p-5 border border-white/5">
+        <div className="p-6 mt-4">
+          <div className="bg-white/5 rounded-3xl p-5 border border-white/5 shadow-inner">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Capacity Gauge</h3>
               <Activity size={14} className={capacity.percent > 80 ? "text-red-500 animate-pulse" : "text-blue-500"} />
@@ -187,14 +144,11 @@ export default function Dashboard() {
             <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-4">
               <div className={`h-full transition-all duration-1000 ${capacity.percent > 80 ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: `${capacity.percent}%` }} />
             </div>
-            <button onClick={() => {
-              const updated = projects.map(p => {
-                const allDone = p.phases.every(ph => ph.tasks.every(t => t.completed)) && p.phases.length > 0;
-                return (allDone && !p.archived) ? { ...p, archived: true, lastUpdated: "Bulk Archived" } : p;
-              });
-              saveAll(updated);
-            }} className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">
-              <Eraser size={14} /> Quick Archive Done
+            <button 
+              onClick={() => { localStorage.clear(); window.location.reload(); }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-red-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+            >
+              <Eraser size={14} /> Force Reset Workspace
             </button>
           </div>
         </div>
@@ -217,7 +171,9 @@ export default function Dashboard() {
         <div className="mt-auto p-4 border-t border-white/5 flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600" />
           <div className="flex-1 text-sm font-semibold text-white">Dan Sims</div>
-          <button onClick={() => setIsEditMode(!isEditMode)} className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-600 text-white' : 'text-slate-500'}`}><Edit3 size={16}/></button>
+          <button onClick={() => setIsEditMode(!isEditMode)} className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
+            <Edit3 size={16}/>
+          </button>
         </div>
       </aside>
 
@@ -226,21 +182,11 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <h2 className="text-3xl font-extrabold tracking-tight">Satellite View</h2>
             <div className="flex items-center gap-4">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600" size={18} />
-                <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} placeholder="Deep Search..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm w-64 shadow-sm outline-none focus:ring-4 focus:ring-blue-500/10" />
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[50]">
-                    {searchResults.map((res, i) => (
-                      <Link key={i} href={`/project/${res.projectId}`} className="block p-4 hover:bg-slate-50 border-b last:border-0">
-                        <span className="text-[10px] font-bold text-blue-600 block mb-1 uppercase">{res.projectTitle}</span>
-                        <p className="text-xs font-medium text-slate-700">{res.taskText}</p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} placeholder="Deep Search..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm w-64 shadow-sm outline-none" />
               </div>
-              <button onClick={()=>setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"><Plus size={20}/> New Project</button>
+              <button onClick={()=>setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg"><Plus size={20}/> New Project</button>
             </div>
           </div>
 
@@ -255,18 +201,13 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {filtered.map((p, index) => (
-            <div key={p.id} className="relative h-full">
-              <ProjectCard project={p} isEditMode={isEditMode} onDelete={(id) => saveAll(projects.filter(proj => proj.id !== id))} onArchive={(id) => saveAll(projects.map(proj => proj.id === id ? {...proj, archived: !proj.archived} : proj))} />
-              {isEditMode && (
-                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm rounded-[2.5rem] z-30 flex flex-col items-center justify-center p-6 animate-in fade-in">
-                  <label className="text-white text-xs font-bold mb-2 uppercase tracking-widest">Order Position</label>
-                  <input type="number" value={p.order || index + 1} onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    saveAll(projects.map(proj => proj.id === p.id ? {...proj, order: val} : proj).sort((a,b)=>a.order-b.order));
-                  }} className="w-20 p-3 bg-white rounded-xl text-center font-bold text-xl outline-none" />
-                </div>
-              )}
-            </div>
+            <ProjectCard 
+              key={p.id} 
+              project={p} 
+              isEditMode={isEditMode} 
+              onDelete={(id) => saveAll(projects.filter(proj => proj.id !== id))} 
+              onArchive={(id) => saveAll(projects.map(proj => proj.id === id ? {...proj, archived: !proj.archived} : proj))} 
+            />
           ))}
         </div>
       </main>
