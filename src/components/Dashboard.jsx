@@ -1,34 +1,119 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Layout, CheckCircle2, Plus, X, Search, Bell, Filter, Briefcase, Building, ShieldCheck } from 'lucide-react';
+import { 
+  Layout, CheckCircle2, Plus, X, Search, Bell, Edit3, 
+  ExternalLink, Settings, Filter, Trash2 
+} from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import ProjectCard from './ProjectCard';
 
 const DIVISIONS = ["All", "Executive", "Facilities", "Internal", "Special Projects"];
 
+const ELITE_SAMPLES = [
+  {
+    id: 301,
+    title: "Project Everest: Q1 Board Review",
+    division: "Executive",
+    status: "On Track",
+    deadline: "Feb 20",
+    lastUpdated: "10:15 AM",
+    order: 1,
+    phases: [
+      { id: 1, name: "Preparation", tasks: [
+        { id: 3011, text: "Collate Dept. Executive Summaries", completed: true, resources: [{id: 1, type: 'file', value: 'CEO_Summary_V2.pdf'}] },
+        { id: 3012, text: "Audit Q4 Financial Statements", completed: true, resources: [{id: 2, type: 'link', value: 'https://finance.portal/q4'}] },
+        { id: 3013, text: "Draft Board Deck v1", completed: false, resources: [] }
+      ]},
+      { id: 2, name: "Logistics", tasks: [
+        { id: 3014, text: "Confirm Director Travel & Hotel", completed: true, resources: [{id: 3, type: 'file', value: 'Travel_Manifest.xlsx'}] },
+        { id: 3015, text: "Finalize Executive Catering Menu", completed: false, resources: [] }
+      ]}
+    ]
+  },
+  {
+    id: 302,
+    title: "Global Leadership Offsite (Kyoto)",
+    division: "Executive",
+    status: "At Risk",
+    deadline: "Mar 15",
+    lastUpdated: "Yesterday",
+    order: 2,
+    phases: [
+      { id: 1, name: "Strategic Planning", tasks: [
+        { id: 3021, text: "Venue Site Selection & RFP", completed: true, resources: [{id: 4, type: 'link', value: 'https://kyoto-conventions.jp/rfp'}] },
+        { id: 3022, text: "Define Key Learning Objectives", completed: true, resources: [] }
+      ]}
+    ]
+  },
+  {
+    id: 303,
+    title: "HQ2 Relocation & IT Setup",
+    division: "Facilities",
+    status: "On Track",
+    deadline: "Feb 18",
+    lastUpdated: "2 mins ago",
+    order: 3,
+    phases: [
+      { id: 1, name: "Planning", tasks: [{ id: 3031, text: "Floor Plan Approval", completed: true, resources: [{id: 5, type: 'file', value: 'Blueprints_Final.dwg'}] }] },
+      { id: 4, name: "Launch", tasks: [
+        { id: 3034, text: "Network Stress Test", completed: true, resources: [] },
+        { id: 3035, text: "Staff Badge Activation", completed: false, resources: [] }
+      ]}
+    ]
+  }
+];
+
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [activeDivision, setActiveDivision] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDivision, setNewDivision] = useState("Executive");
-  const [searchQuery, setSearchQuery] = useState("");
   const [logoLoaded, setLogoLoaded] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('planner_iq_projects');
-    if (saved) setProjects(JSON.parse(saved));
+    if (!saved || !saved.includes('resources')) {
+      localStorage.setItem('planner_iq_projects', JSON.stringify(ELITE_SAMPLES));
+      setProjects(ELITE_SAMPLES);
+    } else {
+      const sorted = JSON.parse(saved).sort((a, b) => (a.order || 0) - (b.order || 0));
+      setProjects(sorted);
+    }
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const results = [];
+    projects.forEach(project => {
+      project.phases.forEach(phase => {
+        phase.tasks.forEach(task => {
+          if (task.text.toLowerCase().includes(searchQuery.toLowerCase())) {
+            results.push({ projectId: project.id, projectTitle: project.title, taskText: task.text });
+          }
+        });
+      });
+    });
+    setSearchResults(results.slice(0, 5));
+  }, [searchQuery, projects]);
 
   const handleCreate = () => {
     if (!newTitle) return;
     const newProject = {
       id: Date.now(),
       title: newTitle,
-      division: newDivision, // Assign the selected division
+      division: newDivision,
       status: "On Track",
       lastUpdated: "Just now",
+      order: projects.length + 1,
       phases: [{ id: 1, name: "Planning", tasks: [] }]
     };
     const updated = [...projects, newProject];
@@ -38,76 +123,108 @@ export default function Dashboard() {
     setNewTitle("");
   };
 
-  // Filter logic for the Satellite View
-  const filteredProjects = projects.filter(p => {
-    const matchesDivision = activeDivision === "All" || p.division === activeDivision;
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesDivision && matchesSearch;
-  });
+  const deleteProject = (id) => {
+    const updated = projects.filter(p => p.id !== id);
+    setProjects(updated);
+    localStorage.setItem('planner_iq_projects', JSON.stringify(updated));
+  };
+
+  const filteredProjects = projects.filter(p => 
+    (activeDivision === "All" || p.division === activeDivision) &&
+    p.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       
-      {/* MODAL WITH DIVISION SELECTOR */}
+      {/* QUICK ADD MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-bold text-2xl mb-6">New Workflow</h3>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 border border-slate-100 animate-in zoom-in-95">
+            <h3 className="font-bold text-2xl mb-6 tracking-tight">New Workflow</h3>
             <div className="space-y-6">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block">Project Name</label>
-                <input value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="e.g. Office Expansion" className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block tracking-widest">Project Name</label>
+                <input autoFocus value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="e.g. Kyoto Offsite" className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none focus:ring-2 focus:ring-blue-500 font-medium" />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block">Division</label>
-                <select value={newDivision} onChange={(e)=>setNewDivision(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none">
+                <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block tracking-widest">Division</label>
+                <select value={newDivision} onChange={(e)=>setNewDivision(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 outline-none font-medium">
                   {DIVISIONS.filter(d => d !== "All").map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
-              <button onClick={handleCreate} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/20">Initialize</button>
+              <button onClick={handleCreate} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">Initialize Workflow</button>
             </div>
           </div>
         </div>
       )}
 
       {/* SIDEBAR */}
-      <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex border-r border-slate-800 shadow-2xl z-20">
+      <aside className="w-80 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex border-r border-slate-800 shadow-2xl z-20">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center font-bold">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center font-bold shrink-0">
             <Image src="/logo.png" alt="Logo" fill className="object-cover z-10" onLoad={()=>setLogoLoaded(true)} onError={()=>setLogoLoaded(false)} unoptimized />
             {!logoLoaded && <span className="text-lg">P</span>}
           </div>
-          <h1 className="font-bold text-white leading-none">Planner-IQ</h1>
+          <h1 className="font-bold text-white tracking-tighter">Planner-IQ</h1>
         </div>
-        <nav className="p-4 mt-6 space-y-2">
-           <div className="flex items-center gap-3 bg-white/10 text-white px-4 py-3 rounded-xl font-semibold"><Layout size={20}/> Satellite View</div>
+
+        <nav className="p-4 space-y-2 mt-4">
+           <div className="flex items-center gap-3 bg-blue-600/10 text-blue-400 px-4 py-3 rounded-xl font-semibold border border-blue-500/20"><Layout size={20}/> Satellite View</div>
+           <div className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer"><Bell size={20}/> Notifications</div>
         </nav>
+
+        {/* SHORTCUT TASK LIST */}
+        <div className="mt-auto p-6 border-t border-white/5 bg-slate-950/50">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Shortcut Tasks</h3>
+          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+            {projects.flatMap(p => p.phases.flatMap(ph => ph.tasks.filter(t => !t.completed).slice(0,1))).map(task => (
+              <div key={task.id} className="p-3 rounded-xl bg-white/5 border border-white/5">
+                <p className="text-xs font-medium text-slate-300 truncate">{task.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-white/5">
+          <div className="flex items-center gap-3 p-2 rounded-xl">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500" />
+            <div className="flex-1 text-sm font-semibold text-white">Dan Sims</div>
+            <button onClick={() => setIsEditMode(!isEditMode)} className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
+              <Edit3 size={16}/>
+            </button>
+          </div>
+        </div>
       </aside>
 
-      <main className="flex-1 lg:ml-72 p-10">
-        <header className="mb-10">
-          <div className="flex justify-between items-center mb-8">
+      {/* MAIN AREA */}
+      <main className="flex-1 lg:ml-80 p-10">
+        <header className="flex flex-col gap-8 mb-12">
+          <div className="flex justify-between items-center">
             <h2 className="text-3xl font-extrabold tracking-tight">Satellite View</h2>
-            <button onClick={()=>setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20"><Plus size={20}/> New Project</button>
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} placeholder="Deep Search..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm w-64 shadow-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
+              </div>
+              <button onClick={()=>setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"><Plus size={20}/> New Project</button>
+            </div>
           </div>
 
-          {/* --- DIVISION FILTER BAR --- */}
-          <div className="flex gap-2 p-1 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto no-scrollbar">
+          {/* DIVISION FILTER BAR */}
+          <div className="flex gap-2 p-1 bg-white border border-slate-200 rounded-2xl shadow-sm w-fit">
             {DIVISIONS.map(div => (
-              <button 
-                key={div}
-                onClick={() => setActiveDivision(div)}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeDivision === div ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}
-              >
+              <button key={div} onClick={() => setActiveDivision(div)} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeDivision === div ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
                 {div}
               </button>
             ))}
           </div>
         </header>
 
-        {/* GRID FILTERED BY DIVISION */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filteredProjects.map(p => <ProjectCard key={p.id} project={p} />)}
+          {filteredProjects.map(p => (
+            <ProjectCard key={p.id} project={p} isEditMode={isEditMode} onDelete={deleteProject} />
+          ))}
         </div>
       </main>
     </div>
