@@ -1,273 +1,131 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Layout, CheckCircle2, Plus, X, Search, Bell, Edit3, 
-  Settings, Archive, Trash2, Filter, Activity, Eraser, Zap
-} from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
-import ProjectCard from './ProjectCard';
+import Image from 'next/image';
+import { 
+  CheckCircle2, Plus, ArrowLeft, Send, Link as LinkIcon, 
+  Paperclip, FileText, Download, Share2, Trash2, Globe, File, ChevronRight
+} from 'lucide-react';
 
-// --- CONFIGURATION & SAMPLES ---
-const DIVISIONS = ["All", "Executive", "Facilities", "Internal", "Special Projects", "Archived"];
-
-const ELITE_SAMPLES = [
-  {
-    id: 301,
-    title: "Project Everest: Q1 Board Review",
-    division: "Executive",
-    status: "On Track",
-    deadline: "Feb 20",
-    lastUpdated: "10:15 AM",
-    order: 1,
-    archived: false,
-    phases: [
-      { id: 1, name: "Preparation", tasks: [
-        { id: 3011, text: "Collate Dept. Executive Summaries", completed: true, resources: [{id: 1, type: 'file', value: 'CEO_Summary_V2.pdf'}] },
-        { id: 3012, text: "Audit Q4 Financial Statements", completed: true, resources: [{id: 2, type: 'link', value: 'https://finance.portal/q4'}] },
-        { id: 3013, text: "Draft Board Deck v1", completed: false, resources: [] }
-      ]},
-      { id: 2, name: "Logistics", tasks: [
-        { id: 3014, text: "Confirm Director Travel & Hotel", completed: true, resources: [{id: 3, type: 'file', value: 'Travel_Manifest.xlsx'}] },
-        { id: 3015, text: "Finalize Executive Catering Menu", completed: false, resources: [] }
-      ]}
-    ]
-  },
-  {
-    id: 302,
-    title: "Global Leadership Offsite (Kyoto)",
-    division: "Executive",
-    status: "At Risk",
-    deadline: "Mar 15",
-    lastUpdated: "Yesterday",
-    order: 2,
-    archived: false,
-    phases: [
-      { id: 1, name: "Strategic Planning", tasks: [
-        { id: 3021, text: "Venue Site Selection & RFP", completed: true, resources: [{id: 4, type: 'link', value: 'https://kyoto.conventions.jp/rfp'}] },
-        { id: 3022, text: "Define Key Learning Objectives", completed: true, resources: [] },
-        { id: 3023, text: "Secure Keynote Speaker", completed: false, resources: [] }
-      ]}
-    ]
-  },
-  {
-    id: 303,
-    title: "HQ2 Relocation & IT Setup",
-    division: "Facilities",
-    status: "On Track",
-    deadline: "Feb 18",
-    lastUpdated: "2 mins ago",
-    order: 3,
-    archived: false,
-    phases: [
-      { id: 1, name: "Planning", tasks: [{ id: 3031, text: "Floor Plan Approval", completed: true, resources: [{id: 5, type: 'file', value: 'Blueprints_Final.dwg'}] }] },
-      { id: 2, name: "Network Setup", tasks: [
-        { id: 3034, text: "Network Stress Test", completed: true, resources: [] },
-        { id: 3035, text: "Staff Badge Activation", completed: false, resources: [] }
-      ]}
-    ]
-  }
-];
-
-export default function Dashboard() {
-  const [projects, setProjects] = useState([]);
-  const [activeDivision, setActiveDivision] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDivision, setNewDivision] = useState("Executive");
+export default function ProjectDetail({ params }) {
+  const [project, setProject] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const [activeInput, setActiveInput] = useState(null);
+  const [taskText, setTaskText] = useState("");
   const [logoLoaded, setLogoLoaded] = useState(false);
+  const [resourceModal, setResourceModal] = useState({ isOpen: false, taskId: null, phaseId: null, type: 'link' });
+  const [resourceValue, setResourceValue] = useState("");
 
-  // --- DATA HYDRATION ENGINE ---
+  useEffect(() => setIsMounted(true), []);
+
   useEffect(() => {
-    const saved = localStorage.getItem('planner_iq_projects');
-    // If storage is empty or missing current Elite structure, force-load samples
-    if (!saved || saved === "[]" || !saved.includes('resources')) {
-      localStorage.setItem('planner_iq_projects', JSON.stringify(ELITE_SAMPLES));
-      setProjects(ELITE_SAMPLES);
-    } else {
-      const parsed = JSON.parse(saved);
-      setProjects(parsed.sort((a, b) => (a.order || 0) - (b.order || 0)));
-    }
-  }, []);
+    if (!isMounted) return;
+    const all = JSON.parse(localStorage.getItem('planner_iq_projects') || '[]');
+    const current = all.find(p => p.id.toString() === params.id);
+    setProject(current);
+  }, [params.id, isMounted]);
 
-  // --- DEEP-SEARCH LOGIC ---
-  useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    const results = [];
-    projects.forEach(project => {
-      project.phases.forEach(phase => {
-        phase.tasks.forEach(task => {
-          if (task.text.toLowerCase().includes(searchQuery.toLowerCase())) {
-            results.push({ projectId: project.id, projectTitle: project.title, taskText: task.text });
-          }
-        });
-      });
-    });
-    setSearchResults(results.slice(0, 5));
-  }, [searchQuery, projects]);
-
-  const saveAll = (list) => {
-    setProjects(list);
-    localStorage.setItem('planner_iq_projects', JSON.stringify(list));
+  const save = (updated) => {
+    const now = new Date();
+    updated.lastUpdated = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setProject(updated);
+    const all = JSON.parse(localStorage.getItem('planner_iq_projects'));
+    localStorage.setItem('planner_iq_projects', JSON.stringify(all.map(p => p.id === updated.id ? updated : p)));
   };
 
-  const getCapacity = () => {
-    const pending = projects.filter(p => !p.archived).reduce((acc, p) => 
-      acc + p.phases.reduce((phAcc, ph) => phAcc + (ph.tasks?.filter(t => !t.completed).length || 0), 0), 0
-    );
-    return { percent: Math.min(Math.round((pending / 30) * 100), 100), count: pending };
+  const generatePDF = () => {
+    const printWindow = window.open('', '_blank');
+    const content = `<html><body style="font-family:sans-serif;padding:40px;"><h1>${project.title} Report</h1><p>Status: ${project.status} | Updated: ${project.lastUpdated}</p>${project.phases.map(ph => `<h3>${ph.name}</h3>${ph.tasks.map(t => `<div>[${t.completed ? 'X' : ' '}] ${t.text}</div>`).join('')}`).join('')}</body></html>`;
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.print();
   };
 
-  const getDivHealth = (name) => {
-    const divP = projects.filter(p => p.division === name && !p.archived);
-    if (divP.length === 0) return 0;
-    const total = divP.reduce((acc, p) => acc + p.phases.reduce((pa, ph) => pa + (ph.tasks?.length || 0), 0), 0);
-    const done = divP.reduce((acc, p) => acc + p.phases.reduce((pa, ph) => pa + (ph.tasks?.filter(t => t.completed).length || 0), 0), 0);
-    return total > 0 ? Math.round((done / total) * 100) : 0;
-  };
-
-  const filtered = projects.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
-    if (activeDivision === "Archived") return p.archived && matchesSearch;
-    return !p.archived && (activeDivision === "All" || p.division === activeDivision) && matchesSearch;
-  });
-
-  const capacity = getCapacity();
+  if (!isMounted || !project) return <div className="p-10 font-bold animate-pulse text-slate-400">Loading Workspace...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
-      {/* QUICK ADD MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 border border-slate-100 animate-in zoom-in-95">
-            <h3 className="font-bold text-2xl mb-6">New Workflow</h3>
-            <div className="space-y-6">
-              <input autoFocus value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} placeholder="Project Name..." className="w-full p-4 bg-slate-50 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-500 font-medium" />
-              <select value={newDivision} onChange={(e)=>setNewDivision(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl border outline-none font-medium">
-                {DIVISIONS.filter(d => d !== "All" && d !== "Archived").map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+      {resourceModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8">
+            <h3 className="font-bold text-xl mb-6">Add {resourceModal.type}</h3>
+            <input value={resourceValue} onChange={(e)=>setResourceValue(e.target.value)} className="w-full p-4 bg-slate-50 border rounded-2xl mb-6" placeholder="Resource Value..."/>
+            <div className="flex gap-3">
+              <button onClick={()=>setResourceModal({isOpen:false})} className="flex-1 py-3 font-bold text-slate-400">Cancel</button>
               <button onClick={() => {
-                const newP = { id: Date.now(), title: newTitle, division: newDivision, status: "On Track", archived: false, order: projects.length+1, phases: [{id:1, name: "Planning", tasks: []}] };
-                saveAll([...projects, newP]);
-                setIsModalOpen(false);
-                setNewTitle("");
-              }} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg">Initialize</button>
+                const updatedPhases = project.phases.map(ph => ph.id === resourceModal.phaseId ? { ...ph, tasks: ph.tasks.map(t => t.id === resourceModal.taskId ? { ...t, resources: [...(t.resources || []), { id: Date.now(), type: resourceModal.type, value: resourceValue }] } : t) } : ph);
+                save({ ...project, phases: updatedPhases });
+                setResourceValue("");
+                setResourceModal({ isOpen: false });
+              }} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold">Add</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SIDEBAR */}
-      <aside className="w-80 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex border-r border-slate-800 shadow-2xl z-20">
+      <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col fixed h-full hidden lg:flex border-r border-slate-800">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center font-bold">
             <Image src="/logo.png" alt="Logo" fill className="object-cover z-10" onLoad={()=>setLogoLoaded(true)} onError={()=>setLogoLoaded(false)} unoptimized />
             {!logoLoaded && "P"}
           </div>
-          <h1 className="font-bold text-white tracking-tighter">Planner-IQ</h1>
+          <h1 className="font-bold text-white">Planner-IQ</h1>
         </div>
-
-        <div className="p-6">
-          <div className="bg-white/5 rounded-3xl p-5 border border-white/5">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Capacity Gauge</h3>
-              <Activity size={14} className={capacity.percent > 80 ? "text-red-500 animate-pulse" : "text-blue-500"} />
-            </div>
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-3xl font-black text-white">{capacity.percent}%</span>
-              <span className="text-[10px] font-bold text-slate-500 mb-1">{capacity.count} Active Tasks</span>
-            </div>
-            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-4">
-              <div className={`h-full transition-all duration-1000 ${capacity.percent > 80 ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: `${capacity.percent}%` }} />
-            </div>
-            <button onClick={() => {
-              const updated = projects.map(p => {
-                const allDone = p.phases.every(ph => ph.tasks.every(t => t.completed)) && p.phases.length > 0;
-                return (allDone && !p.archived) ? { ...p, archived: true, lastUpdated: "Bulk Archived" } : p;
-              });
-              saveAll(updated);
-            }} className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">
-              <Eraser size={14} /> Quick Archive Done
-            </button>
-          </div>
-        </div>
-
-        <div className="px-6 space-y-4 mb-6">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Division Health</h3>
-          {DIVISIONS.filter(d => d !== "All" && d !== "Archived").map(div => (
-            <div key={div} className="space-y-1">
-              <div className="flex justify-between text-[10px] font-bold">
-                <span className="text-slate-400">{div}</span>
-                <span className="text-blue-400">{getDivHealth(div)}%</span>
-              </div>
-              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600/50 transition-all duration-700" style={{ width: `${getDivHealth(div)}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-auto p-4 border-t border-white/5 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600" />
-          <div className="flex-1 text-sm font-semibold text-white">Dan Sims</div>
-          <button onClick={() => setIsEditMode(!isEditMode)} className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-600 text-white' : 'text-slate-500'}`}><Edit3 size={16}/></button>
-        </div>
+        <nav className="p-4 mt-6">
+          <Link href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all font-medium"><ArrowLeft size={20}/> Back to Satellite</Link>
+        </nav>
       </aside>
 
-      <main className="flex-1 lg:ml-80 p-10">
-        <header className="flex flex-col gap-8 mb-12">
-          <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-extrabold tracking-tight">Satellite View</h2>
-            <div className="flex items-center gap-4">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600" size={18} />
-                <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} placeholder="Deep Search..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm w-64 shadow-sm outline-none focus:ring-4 focus:ring-blue-500/10" />
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[50]">
-                    {searchResults.map((res, i) => (
-                      <Link key={i} href={`/project/${res.projectId}`} className="block p-4 hover:bg-slate-50 border-b last:border-0">
-                        <span className="text-[10px] font-bold text-blue-600 block mb-1 uppercase">{res.projectTitle}</span>
-                        <p className="text-xs font-medium text-slate-700">{res.taskText}</p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button onClick={()=>setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"><Plus size={20}/> New Project</button>
+      <main className="flex-1 lg:ml-72 p-12 max-w-5xl mx-auto">
+        <header className="flex justify-between items-start mb-12">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+              <Link href="/" className="hover:text-blue-600 transition-colors">Satellite</Link>
+              <ChevronRight size={12}/>
+              <span className="text-slate-900">{project.title}</span>
             </div>
+            <h1 className="text-5xl font-black tracking-tighter">{project.title}</h1>
           </div>
-
-          <div className="flex gap-2 p-1 bg-white border border-slate-200 rounded-2xl shadow-sm w-fit">
-            {DIVISIONS.map(div => (
-              <button key={div} onClick={() => setActiveDivision(div)} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeDivision === div ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
-                {div}
-              </button>
-            ))}
+          <div className="flex gap-3">
+            <button onClick={generatePDF} className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 flex items-center gap-2 text-xs font-bold shadow-sm">
+              <FileText size={16}/> Print Report
+            </button>
+            <button className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2 text-xs font-bold shadow-lg"><Share2 size={16}/> Share</button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filtered.map((p, index) => (
-            <div key={p.id} className="relative h-full">
-              <ProjectCard project={p} isEditMode={isEditMode} onDelete={(id) => saveAll(projects.filter(proj => proj.id !== id))} onArchive={(id) => saveAll(projects.map(proj => proj.id === id ? {...proj, archived: !proj.archived} : proj))} />
-              {isEditMode && (
-                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm rounded-[2.5rem] z-30 flex flex-col items-center justify-center p-6 animate-in fade-in">
-                  <label className="text-white text-xs font-bold mb-2 uppercase tracking-widest">Order Position</label>
-                  <input type="number" value={p.order || index + 1} onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    saveAll(projects.map(proj => proj.id === p.id ? {...proj, order: val} : proj).sort((a,b)=>a.order-b.order));
-                  }} className="w-20 p-3 bg-white rounded-xl text-center font-bold text-xl outline-none" />
+        <div className="space-y-12">
+          {project.phases.map((phase) => (
+            <section key={phase.id}>
+              <div className="flex justify-between items-center mb-5 px-2">
+                <input defaultValue={phase.name} onBlur={(e) => save({...project, phases: project.phases.map(ph => ph.id === phase.id ? {...ph, name: e.target.value} : ph)})} className="bg-transparent font-bold text-slate-400 uppercase tracking-widest text-xs outline-none focus:text-blue-600" />
+              </div>
+              <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+                {phase.tasks.map((task) => (
+                  <div key={task.id} className="p-6 border-b border-slate-50 last:border-0 group/task">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div onClick={() => save({...project, phases: project.phases.map(ph => ph.id === phase.id ? {...ph, tasks: ph.tasks.map(t => t.id === task.id ? {...t, completed: !t.completed} : t)} : ph)})} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer ${task.completed ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-200'}`}>{task.completed && <CheckCircle2 size={14}/>}</div>
+                        <span className={`text-sm font-semibold ${task.completed ? 'text-slate-300 line-through' : 'text-slate-700'}`}>{task.text}</span>
+                      </div>
+                      <div className="flex gap-2 opacity-0 group-hover/task:opacity-100 transition-opacity">
+                        <button onClick={()=>setResourceModal({isOpen:true, taskId:task.id, phaseId:phase.id, type:'link'})} className="p-2 bg-slate-50 rounded-lg text-slate-400 hover:text-blue-600"><LinkIcon size={14}/></button>
+                        <button onClick={()=>setResourceModal({isOpen:true, taskId:task.id, phaseId:phase.id, type:'file'})} className="p-2 bg-slate-50 rounded-lg text-slate-400 hover:text-purple-600"><Paperclip size={14}/></button>
+                      </div>
+                    </div>
+                    {task.resources?.length > 0 && <div className="mt-3 ml-10 flex flex-wrap gap-2">{task.resources.map(res => <div key={res.id} className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 border border-slate-200 flex items-center gap-2">{res.type === 'link' ? <Globe size={10}/> : <File size={10}/>} {res.value}</div>)}</div>}
+                  </div>
+                ))}
+                <div className="p-4 bg-slate-50/50">
+                  {activeInput === phase.id ? (
+                    <div className="flex gap-2 p-1"><input autoFocus value={taskText} onChange={(e)=>setTaskText(e.target.value)} onKeyDown={(e)=>e.key==='Enter' && handleAddTask(phase.id)} className="flex-1 p-3 bg-white border rounded-xl" placeholder="Task..."/><button onClick={() => { save({...project, phases: project.phases.map(ph => ph.id === phase.id ? {...ph, tasks: [...ph.tasks, { id: Date.now(), text: taskText, completed: false, resources: [] }]} : ph)}); setTaskText(""); setActiveInput(null); }} className="bg-blue-600 text-white p-3 rounded-xl"><Send size={18}/></button></div>
+                  ) : ( <button onClick={()=>setActiveInput(phase.id)} className="w-full text-center text-xs font-bold text-slate-400 hover:text-blue-600 py-2">+ Add Task</button> )}
                 </div>
-              )}
-            </div>
+              </div>
+            </section>
           ))}
+          <button onClick={() => save({...project, phases: [...project.phases, {id: Date.now(), name: "New Phase", tasks: []}]})} className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[2.5rem] font-bold text-slate-400 hover:border-blue-300 hover:text-blue-600">+ Add Phase</button>
         </div>
       </main>
     </div>
