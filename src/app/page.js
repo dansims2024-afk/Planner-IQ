@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, Calendar, Globe, BrainCircuit, TrendingUp, Settings, 
-  Menu, Bell, Zap, ListTodo, ShieldCheck, 
-  Users, ArrowLeft, Clock, CheckCircle2, AlertTriangle, X
+  Menu, Bell, Zap, ListTodo, ShieldCheck, CheckSquare, Square,
+  Users, ArrowLeft, Clock, CheckCircle2, AlertTriangle, X, Filter
 } from 'lucide-react';
 
 // --- DATA STORE ---
@@ -15,14 +15,39 @@ const DATA = {
     { id: 'health', label: "System Health", value: "98%", icon: ShieldCheck, color: "#10b981", linkTo: 'SystemHealth' }
   ],
   projects: [
-    { id: 1, name: "Skilled Trades: NJ Rollout", status: "Active", progress: 85, region: "North NJ", lead: "Dan Sims", budget: "$1.2M", nextStep: "Finalize Newark Hub Lease" },
-    { id: 2, name: "East Windsor Logistics Hub", status: "Planning", progress: 30, region: "Central", lead: "Ops Team", budget: "$450k", nextStep: "Vendor Selection" },
-    { id: 3, name: "Recruit-IQ Integration", status: "Delayed", progress: 45, region: "Corporate", lead: "Tech Div", budget: "$200k", nextStep: "API Debugging" },
-    { id: 4, name: "Q1 Executive Hiring", status: "Complete", progress: 100, region: "Metro", lead: "Dan Sims", budget: "N/A", nextStep: "Onboarding" },
-    { id: 5, name: "Mid-Atlantic Vendor Sync", status: "Active", progress: 60, region: "Mid-Atlantic", lead: "Sarah J.", budget: "$75k", nextStep: "Contract Review" },
-    { id: 6, name: "Compliance Audit 2026", status: "Active", progress: 15, region: "Corporate", lead: "Legal", budget: "$50k", nextStep: "Data Collection" },
-    { id: 7, name: "Field Office Expansion", status: "Planning", progress: 5, region: "South NJ", lead: "Mike R.", budget: "$300k", nextStep: "Site Visits" },
-    { id: 8, name: "Planner-IQ V2 Launch", status: "Active", progress: 92, region: "Remote", lead: "Dev Team", budget: "$150k", nextStep: "UAT Testing" }
+    { 
+      id: 1, name: "Skilled Trades: NJ Rollout", status: "Active", progress: 85, region: "North NJ", lead: "Dan Sims", budget: "$1.2M", 
+      tasks: [
+        { id: 101, title: "Finalize Newark Hub Lease", assignee: "Dan Sims", due: "Feb 20", status: "Pending" },
+        { id: 102, title: "Hire 3 Senior Recruiters", assignee: "Mike R.", due: "Feb 25", status: "Done" },
+        { id: 103, title: "Setup Regional KPI Dashboard", assignee: "Tech Team", due: "Feb 28", status: "Pending" }
+      ]
+    },
+    { 
+      id: 2, name: "East Windsor Logistics Hub", status: "Planning", progress: 30, region: "Central", lead: "Ops Team", budget: "$450k", 
+      tasks: [
+        { id: 201, title: "Vendor Selection: HVAC", assignee: "Sarah J.", due: "Mar 10", status: "Pending" },
+        { id: 202, title: "Zoning Permit Application", assignee: "Legal", due: "Mar 15", status: "Pending" }
+      ]
+    },
+    { 
+      id: 3, name: "Recruit-IQ Integration", status: "Delayed", progress: 45, region: "Corporate", lead: "Tech Div", budget: "$200k", 
+      tasks: [
+        { id: 301, title: "API Debugging with Clerk", assignee: "Dev Team", due: "Today", status: "Pending" },
+        { id: 302, title: "Stripe Payment Gateway Test", assignee: "Dev Team", due: "Feb 22", status: "Pending" }
+      ]
+    },
+    { 
+      id: 4, name: "Q1 Executive Hiring", status: "Complete", progress: 100, region: "Metro", lead: "Dan Sims", budget: "N/A", 
+      tasks: [
+        { id: 401, title: "Final Offer: VP of Sales", assignee: "Dan Sims", due: "Jan 15", status: "Done" },
+        { id: 402, title: "Onboarding Kit Dispatch", assignee: "HR", due: "Jan 20", status: "Done" }
+      ]
+    },
+    { id: 5, name: "Mid-Atlantic Vendor Sync", status: "Active", progress: 60, region: "Mid-Atlantic", lead: "Sarah J.", budget: "$75k", tasks: [] },
+    { id: 6, name: "Compliance Audit 2026", status: "Active", progress: 15, region: "Corporate", lead: "Legal", budget: "$50k", tasks: [] },
+    { id: 7, name: "Field Office Expansion", status: "Planning", progress: 5, region: "South NJ", lead: "Mike R.", budget: "$300k", tasks: [] },
+    { id: 8, name: "Planner-IQ V2 Launch", status: "Active", progress: 92, region: "Remote", lead: "Dev Team", budget: "$150k", tasks: [] }
   ],
   resources: [
     { id: 101, name: "Kareen S.", role: "Senior Analyst", utilization: 92, status: "Overloaded", currentTask: "Financial Modeling", location: "East Windsor" },
@@ -30,7 +55,7 @@ const DATA = {
     { id: 103, name: "Sarah J.", role: "Compliance Officer", utilization: 40, status: "Available", currentTask: "Audit Prep", location: "Corporate" },
     { id: 104, name: "Dev Team A", role: "Engineering", utilization: 88, status: "Active", currentTask: "Vercel Deployment", location: "Remote" }
   ],
-  tasks: [
+  eaTasks: [
     { id: 't1', time: "09:00 AM", task: "Review Mid-Atlantic KPI Report", type: "Urgent", status: "Pending" },
     { id: 't2', time: "11:30 AM", task: "Skilled Trades Budget Approval", type: "Standard", status: "Pending" },
     { id: 't3', time: "02:15 PM", task: "Vercel Deployment Sync", type: "Tech", status: "In Progress" },
@@ -38,9 +63,9 @@ const DATA = {
   ]
 };
 
-export default function PlannerIQComplete() {
-  const [view, setView] = useState('Dashboard'); // Controls the main screen
-  const [selectedItem, setSelectedItem] = useState(null); // Tracks which Project/Resource is clicked
+export default function PlannerIQFinal() {
+  const [view, setView] = useState('Dashboard'); 
+  const [selectedItem, setSelectedItem] = useState(null); 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifications, setNotifications] = useState(3);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -153,7 +178,7 @@ export default function PlannerIQComplete() {
                    <span style={{ fontSize: '0.8rem' }}>{p.progress}%</span>
                  </div>
               </td>
-              <td style={{ padding: '16px', color: '#3b82f6' }}>View Details</td>
+              <td style={{ padding: '16px', color: '#3b82f6' }}>View Tasks</td>
             </tr>
           ))}
         </tbody>
@@ -167,8 +192,9 @@ export default function PlannerIQComplete() {
         <ArrowLeft size={18} /> Back to Projects
       </button>
       
-      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '32px' }}>
+      {/* HEADER CARD */}
+      <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px' }}>
           <div>
             <span style={{ color: '#3b82f6', fontWeight: '600', fontSize: '0.9rem' }}>PROJECT ID: #PIQ-{project.id}00</span>
             <h1 style={{ fontSize: '2.5rem', margin: '8px 0', color: '#0f172a' }}>{project.name}</h1>
@@ -178,26 +204,43 @@ export default function PlannerIQComplete() {
             {project.status}
           </span>
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '40px' }}>
-          <div style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0, color: '#475569' }}>Financials</h3>
-            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{project.budget}</p>
-            <p style={{ fontSize: '0.9rem', color: '#64748b' }}>Allocated Budget</p>
-          </div>
-          <div style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '16px' }}>
-            <h3 style={{ marginTop: 0, color: '#475569' }}>Next Milestone</h3>
-            <p style={{ fontSize: '1.2rem', fontWeight: 'bold', margin: 0 }}>{project.nextStep}</p>
-            <p style={{ fontSize: '0.9rem', color: '#64748b' }}>Action Required</p>
-          </div>
-        </div>
-
         <div>
-          <h3 style={{ marginBottom: '16px' }}>Completion Status ({project.progress}%)</h3>
-          <div style={{ width: '100%', height: '24px', backgroundColor: '#f1f5f9', borderRadius: '12px', overflow: 'hidden' }}>
-             <div style={{ width: `${project.progress}%`, height: '100%', backgroundColor: '#3b82f6', transition: 'width 1s ease' }}></div>
+          <h3 style={{ marginBottom: '16px', fontSize: '1rem', color: '#64748b' }}>Overall Progress ({project.progress}%)</h3>
+          <div style={{ width: '100%', height: '12px', backgroundColor: '#f1f5f9', borderRadius: '6px', overflow: 'hidden' }}>
+             <div style={{ width: `${project.progress}%`, height: '100%', backgroundColor: '#3b82f6' }}></div>
           </div>
         </div>
+      </div>
+
+      {/* TASK LIST MODULE */}
+      <div style={{ backgroundColor: 'white', borderRadius: '20px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+           <h3 style={{ margin: 0, fontSize: '1.4rem' }}>Project Task List</h3>
+           <button style={{ padding: '8px 16px', backgroundColor: '#0f172a', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>+ Add Task</button>
+        </div>
+        
+        {project.tasks && project.tasks.length > 0 ? (
+          project.tasks.map((task) => (
+            <div key={task.id} style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid #f1f5f9', gap: '16px' }}>
+               <div style={{ cursor: 'pointer', color: task.status === 'Done' ? '#10b981' : '#cbd5e1' }}>
+                 {task.status === 'Done' ? <CheckSquare size={24} /> : <Square size={24} />}
+               </div>
+               <div style={{ flex: 1 }}>
+                 <span style={{ display: 'block', fontSize: '1.1rem', textDecoration: task.status === 'Done' ? 'line-through' : 'none', color: task.status === 'Done' ? '#94a3b8' : '#0f172a' }}>{task.title}</span>
+                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Assigned to: <strong>{task.assignee}</strong></span>
+               </div>
+               <div style={{ textAlign: 'right' }}>
+                 <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b' }}>Due Date</span>
+                 <span style={{ fontWeight: '500', color: '#ef4444' }}>{task.due}</span>
+               </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+            <p>No active tasks for this project.</p>
+            <button style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Create First Task</button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -257,10 +300,6 @@ export default function PlannerIQComplete() {
           <span>Utilization</span>
           <span style={{ fontWeight: 'bold', color: resource.utilization > 90 ? '#ef4444' : '#10b981' }}>{resource.utilization}%</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid #f1f5f9' }}>
-          <span>Status</span>
-          <span>{resource.status}</span>
-        </div>
       </div>
     </div>
   );
@@ -289,8 +328,8 @@ export default function PlannerIQComplete() {
         </button>
       </div>
 
-      <h3 style={{ marginLeft: '8px', marginBottom: '16px', color: '#64748b' }}>Pending Tasks ({DATA.tasks.length})</h3>
-      {DATA.tasks.map((t) => (
+      <h3 style={{ marginLeft: '8px', marginBottom: '16px', color: '#64748b' }}>Pending EA Tasks ({DATA.eaTasks.length})</h3>
+      {DATA.eaTasks.map((t) => (
         <div key={t.id} style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
           <div style={{ minWidth: '80px', paddingTop: '4px', textAlign: 'right', fontWeight: 'bold', color: '#64748b' }}>{t.time}</div>
           <div style={{ flex: 1, backgroundColor: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: `4px solid ${t.type === 'Urgent' ? '#ef4444' : '#3b82f6'}` }}>
@@ -320,7 +359,7 @@ export default function PlannerIQComplete() {
         width: sidebarOpen ? '280px' : '80px', backgroundColor: '#0f172a', color: 'white', 
         padding: '24px 16px', transition: 'width 0.3s ease', display: 'flex', flexDirection: 'column', flexShrink: 0 
       }}>
-        {/* LOGO: CSS STYLED (NO IMAGE FILE NEEDED) */}
+        {/* LOGO */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
           <div style={{ backgroundColor: '#0070f3', padding: '10px', borderRadius: '12px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Zap size={24} color="white" fill="white" />
@@ -364,7 +403,7 @@ export default function PlannerIQComplete() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><Menu size={24} /></button>
             <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: '700', color: '#0f172a' }}>
-              {view === 'ProjectList' ? 'Projects' : view === 'ProjectDetail' ? 'Project Details' : view}
+              {view === 'ProjectList' ? 'Projects' : view === 'ProjectDetail' ? 'Project Dashboard' : view}
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
